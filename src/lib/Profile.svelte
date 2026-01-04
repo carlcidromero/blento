@@ -9,11 +9,11 @@
 		did,
 		data,
 		showEditButton = false
-	}: { handle: string; did: string; data: any; showEditButton: boolean } = $props();
+	}: { handle: string; did: string; data: any; showEditButton?: boolean } = $props();
 	$inspect(data);
 
+	// svelte-ignore state_referenced_locally
 	const profileData = data?.data?.['app.bsky.actor.profile']?.self?.value;
-	$inspect(profileData);
 
 	const renderer = new marked.Renderer();
 	renderer.link = ({ href, title, text }) =>

@@ -197,7 +197,7 @@
 	</div>
 </div>
 
-{#if !client.isLoggedIn || client.profile?.did === did}
+{#if (!client.isLoggedIn && !client.isInitializing) || client.profile?.did === did}
 	<Navbar
 		class="dark:bg-base-900 bg-base-100 top-auto bottom-2 mx-4 mt-3 max-w-3xl rounded-full px-4 lg:mx-auto"
 	>
