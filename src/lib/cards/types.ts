@@ -25,4 +25,6 @@ export type CardDefinition = {
 		onSave: (item: Item) => void;
 		onCancel: () => void;
 	}>;
+
+	upload?: (item: Item) => Promise<Item>;
 };

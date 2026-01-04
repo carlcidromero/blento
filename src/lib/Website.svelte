@@ -4,6 +4,7 @@
 	import { setIsMobile, sortItems } from './helper';
 	import type { Item } from './types';
 	import { innerWidth } from 'svelte/reactivity/window';
+	import { setDidContext } from './website/context';
 
 	let { handle, did, items, data }: { handle: string; did: string; items: Item[]; data: any } =
 		$props();
@@ -12,6 +13,9 @@
 
 	setIsMobile(() => isMobile);
 
+	// svelte-ignore state_referenced_locally
+	setDidContext(did);
+	
 	let maxHeight = $derived(
 		items.reduce(
 			(max, item) => Math.max(max, isMobile ? item.mobileY + item.mobileH : item.y + item.h),

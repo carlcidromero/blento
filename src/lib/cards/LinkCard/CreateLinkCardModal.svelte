@@ -8,6 +8,7 @@
 
 	async function fetchMetadata() {
 		item.cardData.domain = new URL(item.cardData.href).hostname;
+        isFetchingMetadata = true;
 
 		try {
 			const response = await fetch('/api/links?link=' + encodeURIComponent(item.cardData.href));
@@ -26,8 +27,8 @@
 	}
 </script>
 
-<Modal open={true}>
-	<Subheading level={2}>Enter a link</Subheading>
+<Modal open={true} closeButton={false}>
+	<Subheading>Enter a link</Subheading>
 	<Input bind:value={item.cardData.href} />
 
 	<div class="mt-4 flex justify-end gap-2">

@@ -16,6 +16,7 @@
 	import { tick, type Component } from 'svelte';
 	import type { CreationModalComponentProps } from './cards/types';
 	import { dev } from '$app/environment';
+	import { setDidContext } from './website/context';
 
 	let {
 		handle,
@@ -53,6 +54,9 @@
 	let isMobile = $derived(showingMobileView || (innerWidth.current ?? 1000) < 1024);
 
 	setIsMobile(() => isMobile);
+	
+	// svelte-ignore state_referenced_locally
+	setDidContext(did);
 
 	const getX = (item: Item) => (isMobile ? (item.mobileX ?? item.x) : item.x);
 	const getY = (item: Item) => (isMobile ? (item.mobileY ?? item.y) : item.y);
@@ -114,6 +118,48 @@
 	let isSaving = $state(false);
 
 	let newItem: { modal?: Component<CreationModalComponentProps>; item?: Item } = $state({});
+
+	async function save() {
+		isSaving = true;
+
+		const promises = [];
+		// find all cards that have been updated (where items differ from originalItems)
+		for (let item of items) {
+			const originalItem = originalItems.find((i) => cardsEqual(i, item));
+
+			if (!originalItem) {
+				console.log('updated or new item', item);
+				item.updatedAt = new Date().toISOString();
+				// run optional upload function for this card type
+				const cardDef = CardDefinitionsByType[item.cardType];
+
+				if (cardDef?.upload) {
+					item = await cardDef?.upload(item);
+				}
+
+				promises.push(putRecord({ collection: 'com.example.bento', rkey: item.id, record: item }));
+			}
+		}
+
+		// delete items that are in originalItems but not in items
+		for (let originalItem of originalItems) {
+			const item = items.find((i) => i.id === originalItem.id);
+			if (!item) {
+				console.log('deleting item', originalItem);
+				promises.push(
+					deleteRecord({ collection: 'com.example.bento', rkey: originalItem.id, did })
+				);
+			}
+		}
+
+		await Promise.all(promises);
+
+		isSaving = false;
+
+		toast('Saved', {
+			description: 'Your website has been saved!'
+		});
+	}
 </script>
 
 {#if !dev}
@@ -359,33 +405,7 @@
 				<Button
 					disabled={isSaving}
 					onclick={async () => {
-						isSaving = true;
-
-						// find all cards that have been updated (where items differ from originalItems)
-						for (let item of items) {
-							const originalItem = originalItems.find((i) => cardsEqual(i, item));
-
-							if (!originalItem) {
-								console.log('updated or new item', item);
-								item.updatedAt = new Date().toISOString();
-								await putRecord({ collection: 'com.example.bento', rkey: item.id, record: item });
-							}
-						}
-
-						// delete items that are in originalItems but not in items
-						for (let originalItem of originalItems) {
-							const item = items.find((i) => i.id === originalItem.id);
-							if (!item) {
-								console.log('deleting item', originalItem);
-								await deleteRecord({ collection: 'com.example.bento', rkey: originalItem.id, did });
-							}
-						}
-
-						isSaving = false;
-
-						toast('Saved', {
-							description: 'Your website has been saved!'
-						});
+						save();
 					}}>{isSaving ? 'Saving...' : 'Save'}</Button
 				>
 			{:else}
