@@ -27,14 +27,14 @@
 	<div class="flex flex-col gap-4">
 		<Head
 			favicon={'https://cdn.bsky.app/img/avatar/plain/' + did + '/' + profileData?.avatar.ref.$link}
-			title={(profileData?.displayName ?? handle) + "'s blento"}
+			title={(profileData?.displayName || handle) + "'s blento"}
 		/>
 		<img
 			class="rounded-fulll size-32 rounded-full @5xl/wrapper:size-44"
 			src={'https://cdn.bsky.app/img/avatar/plain/' + did + '/' + profileData?.avatar.ref.$link}
 			alt=""
 		/>
-		<div class="line-clamp-2 text-4xl font-bold wrap-anywhere">{(profileData?.displayName ?? handle)}</div>
+		<div class="line-clamp-2 text-4xl font-bold wrap-anywhere">{(profileData?.displayName || handle)}</div>
 
 		<div
 			class="text-base-600 dark:text-base-400 prose dark:prose-invert prose-a:text-accent-500 prose-a:no-underline line-clamp-3"
