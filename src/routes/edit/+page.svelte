@@ -1,15 +1,14 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import EditableWebsite from '$lib/EditableWebsite.svelte';
 	import { type Item } from '$lib/types.js';
-	import Website from '$lib/Website.svelte';
 
 	let { data } = $props();
-	$inspect(data);
 </script>
 
-<Website
-	{data}
-	handle={page.params.handle}
+<EditableWebsite
+	handle={data.handle}
 	did={data.did}
+	{data}
 	items={Object.values(data.data['com.example.bento']).map((i) => i.value) as Item[]}
 />

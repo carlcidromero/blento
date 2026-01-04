@@ -5,7 +5,7 @@
 	import type { Item } from './types';
 	import { innerWidth } from 'svelte/reactivity/window';
 
-	let { handle, did, items }: { handle: string; did: string; items: Item[] } = $props();
+	let { handle, did, items, data }: { handle: string; did: string; items: Item[], data:any } = $props();
 
 	let isMobile = $derived((innerWidth.current ?? 1000) < 1024);
 
@@ -19,7 +19,7 @@
 	let container: HTMLDivElement | undefined = $state();
 </script>
 
-<Profile {handle} {did} />
+<Profile {handle} {did} {data} showEditButton={true} />
 
 <div class="mx-auto max-w-2xl lg:grid lg:max-w-none lg:grid-cols-4 xl:grid-cols-3">
 	<div></div>

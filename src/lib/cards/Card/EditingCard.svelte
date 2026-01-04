@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { BaseEditingCardProps } from '../BaseCard/BaseEditingCard.svelte';
-	import { CardDefinitionsByType } from '.';
+	import { CardDefinitionsByType } from '..';
 	import BaseCard from '../BaseCard/BaseCard.svelte';
 
 	let { item = $bindable(), ref = $bindable(), ...rest }: BaseEditingCardProps = $props();

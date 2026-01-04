@@ -9,7 +9,7 @@ export const TextCardDefinition = {
 	createNew: (card) => {
 		card.cardType = 'text';
 		card.cardData = {
-			text: ''
+			text: 'hello world'
 		};
 	}
 } as CardDefinition & { type: 'text' };

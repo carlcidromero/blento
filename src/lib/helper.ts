@@ -114,3 +114,30 @@ export function cardsEqual(a: Item, b: Item) {
 		a.mobileY === b.mobileY
 	);
 }
+
+export function setPositionOfNewItem(newItem: Item, items: Item[]) {
+	let foundPosition = false;
+	while (!foundPosition) {
+		for (newItem.x = 0; newItem.x <= 4 - newItem.w; newItem.x++) {
+			const collision = items.find((item) => overlaps(newItem, item));
+			if (!collision) {
+				foundPosition = true;
+				break;
+			}
+		}
+		if (!foundPosition) newItem.y += 1;
+	}
+
+	let foundMobilePosition = false;
+	while (!foundMobilePosition) {
+		for (newItem.mobileX = 0; newItem.mobileX <= 4 - newItem.mobileW; newItem.mobileX += 1) {
+			const collision = items.find((item) => overlaps(newItem, item, true));
+
+			if (!collision) {
+				foundMobilePosition = true;
+				break;
+			}
+		}
+		if (!foundMobilePosition) newItem.mobileY! += 2;
+	}
+}

@@ -1,10 +1,14 @@
-import { type Collection, type DownloadedData } from './types';
+import {
+	type Collection,
+	type DownloadedData,
+	type IndividualCollections,
+	type ListCollections
+} from './types';
 import { getRecord, listRecords, resolveHandle } from '$lib/oauth/atproto';
 import type { Record as ListRecord } from '@atproto/api/dist/client/types/com/atproto/repo/listRecords';
 import { data } from './data';
 
 export function parseUri(uri: string) {
-	// at://did:plc:257wekqxg4hyapkq6k47igmp/link.flo-bit.dev/3lnblfznvhr2a
 	const [did, collection, rkey] = uri.split('/').slice(2);
 	return { did, collection, rkey } as {
 		collection: `${string}.${string}.${string}`;
@@ -18,7 +22,11 @@ export async function loadData(handle: string) {
 
 	const downloadedData = {} as DownloadedData;
 
-	const promises: { collection: string; rkey?: string; record: ListRecord }[] = [];
+	const promises: {
+		collection: string;
+		rkey?: string;
+		record: Promise<ListRecord> | Promise<Record<string, ListRecord>>;
+	}[] = [];
 
 	for (const collection of Object.keys(data) as Collection[]) {
 		const cfg = data[collection];
@@ -46,14 +54,19 @@ export async function loadData(handle: string) {
 
 	for (const promise of promises) {
 		if (promise.rkey) {
-			downloadedData[promise.collection] ??= {} as Record<string, ListRecord>;
-			downloadedData[promise.collection][promise.rkey] = await promise.record;
+			downloadedData[promise.collection as IndividualCollections] ??= {} as Record<
+				string,
+				ListRecord
+			>;
+			downloadedData[promise.collection as IndividualCollections][promise.rkey] =
+				(await promise.record) as ListRecord;
 		} else {
-			downloadedData[promise.collection] ??= await promise.record;
+			downloadedData[promise.collection as ListCollections] ??= (await promise.record) as Record<
+				string,
+				ListRecord
+			>;
 		}
 	}
-
-	console.log(downloadedData);
 
 	return { did, data: JSON.parse(JSON.stringify(downloadedData)) as DownloadedData };
 }

@@ -1,13 +1,15 @@
 <script lang="ts">
-	import { onMount } from "svelte";
+	import { page } from '$app/state';
+	import { type Item } from '$lib/types.js';
+	import Website from '$lib/Website.svelte';
 
-	onMount(async () => {
-		const data = await fetch('/api/links?link=https://bento.me/flo-bit');
-		const json = await data.json();
-		console.log(json);
-	})
+	let { data } = $props();
+	$inspect(data);
 </script>
 
-<div class="flex h-screen items-center justify-center">
-	<h1 class="text-7xl font-bold">blento</h1>
-</div>
+<Website
+	{data}
+	handle={data.handle}
+	did={data.did}
+	items={Object.values(data.data['com.example.bento']).map((i) => i.value) as Item[]}
+/>

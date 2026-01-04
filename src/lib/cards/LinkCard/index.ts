@@ -9,9 +9,7 @@ export const LinkCardDefinition = {
 	createNew: (card) => {
 		card.cardType = 'link';
 		card.cardData = {
-			src: '',
-			alt: '',
-			href: ''
+			href: 'https://flo-bit.dev'
 		};
 	}
 } as CardDefinition & { type: 'link' };

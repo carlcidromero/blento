@@ -1,7 +1,7 @@
-import { ImageCardDefinition } from '../ImageCard';
-import { LinkCardDefinition } from '../LinkCard';
-import { TextCardDefinition } from '../TextCard';
-import type { CardDefinition } from '../types';
+import { ImageCardDefinition } from './ImageCard';
+import { LinkCardDefinition } from './LinkCard';
+import { TextCardDefinition } from './TextCard';
+import type { CardDefinition } from './types';
 
 export const AllCardDefinitions = [
 	ImageCardDefinition,

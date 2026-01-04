@@ -9,9 +9,10 @@ export const ImageCardDefinition = {
 	createNew: (card) => {
 		card.cardType = 'image';
 		card.cardData = {
-			src: '',
+			image: `https://picsum.photos/seed/${card.id}/800/800`,
 			alt: '',
-			href: ''
+			href: 'https://example.com'
 		};
+		console.log('adding new card', card);
 	}
 } as CardDefinition & { type: 'image' };

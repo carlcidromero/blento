@@ -1,14 +1,9 @@
 <script lang="ts">
-	import { ThemeToggle } from '@foxui/core';
-
 	import '../app.css';
+	
+	import { ThemeToggle } from '@foxui/core';
 	import { onMount } from 'svelte';
 	import { initClient } from '$lib/oauth';
-	import { gsap } from 'gsap';
-
-	import { Flip } from 'gsap/Flip';
-
-	gsap.registerPlugin(Flip);
 
 	let { children } = $props();
 
