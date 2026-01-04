@@ -69,7 +69,6 @@ export async function listRecords({
 
 import type { Record as ListRecord } from '@atproto/api/dist/client/types/com/atproto/repo/listRecords';
 import { parseUri } from '$lib/website/utils';
-import { image_collection } from '$lib/website/data';
 
 export async function getRecord({
 	did,

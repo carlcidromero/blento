@@ -1,6 +1,6 @@
 import { base } from '$app/paths';
 
-export const SITE_URL = 'https://flo-bit.dev';
+export const SITE_URL = 'https://blento.flobit-dev.workers.dev';
 
 export const metadata = {
 	client_id: `${SITE_URL}${base}/client-metadata.json`,
