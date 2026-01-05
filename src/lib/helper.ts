@@ -146,3 +146,5 @@ export function setPositionOfNewItem(newItem: Item, items: Item[]) {
 export const [getIsMobile, setIsMobile] = createContext<() => boolean>();
 
 export const [getCanEdit, setCanEdit] = createContext<() => boolean>();
+
+export const [getRecentRecords, setRecentRecords] = createContext();

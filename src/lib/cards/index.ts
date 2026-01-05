@@ -1,12 +1,14 @@
 import { ImageCardDefinition } from './ImageCard';
 import { LinkCardDefinition } from './LinkCard';
+import { UpdatedBlentosCardDefitition } from './SpecialCards/UpdatedBlentos';
 import { TextCardDefinition } from './TextCard';
 import type { CardDefinition } from './types';
 
 export const AllCardDefinitions = [
 	ImageCardDefinition,
 	TextCardDefinition,
-	LinkCardDefinition
+	LinkCardDefinition,
+	UpdatedBlentosCardDefitition
 ] as const;
 
 export const CardDefinitionsByType = AllCardDefinitions.reduce(

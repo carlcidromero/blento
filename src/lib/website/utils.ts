@@ -69,7 +69,20 @@ export async function loadData(handle: string) {
 		}
 	}
 
-	return { did, data: JSON.parse(JSON.stringify(downloadedData)) as DownloadedData };
+	let recentRecords;
+	if (handle === 'blento.app') {
+		try {
+			// https://ufos-api.microcosm.blue/records?collection=app.blento.card
+			const response = await fetch(
+				'https://ufos-api.microcosm.blue/records?collection=app.blento.card'
+			);
+			recentRecords = await response.json();
+		} catch (error) {
+			console.error('failed to fetch recent records', error);
+		}
+	}
+
+	return { did, data: JSON.parse(JSON.stringify(downloadedData)) as DownloadedData, recentRecords };
 }
 
 export async function uploadImage(image: Blob) {

@@ -3,7 +3,7 @@
 
 	import { marked } from 'marked';
 	import { client, login } from './oauth';
-	import { Button } from '@foxui/core';
+	import { Button, Subheading } from '@foxui/core';
 	import { BlueskyLogin } from '@foxui/social';
 	import { env } from '$env/dynamic/public';
 	let {
@@ -70,12 +70,17 @@
 
 		{#if !env.PUBLIC_IS_SELFHOSTED && handle === 'blento.app' && client.profile?.handle !== handle}
 			{#if !client.isInitializing && !client.isLoggedIn}
-				<BlueskyLogin
-					login={async (handle) => {
-						await login(handle);
-						return true;
-					}}
-				/>
+				<div>
+					<div class="my-4 text-sm">
+						To create your own blento, sign in with your bluesky account
+					</div>
+					<BlueskyLogin
+						login={async (handle) => {
+							await login(handle);
+							return true;
+						}}
+					/>
+				</div>
 			{:else if client.isLoggedIn}
 				<div>
 					<Button href={client.profile?.handle} class="mt-2">
