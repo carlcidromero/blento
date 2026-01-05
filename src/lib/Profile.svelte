@@ -48,7 +48,7 @@
 
 		{#if showEditButton && client.isLoggedIn && client.profile?.did === did}
 			<div>
-				<Button href="{env.PUBLIC_IS_SELFHOSTED && client.profile?.handle}/edit" class="mt-2">
+				<Button href="{env.PUBLIC_IS_SELFHOSTED ? '' : client.profile?.handle}/edit" class="mt-2">
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
 						fill="none"
