@@ -3,12 +3,14 @@ import { LinkCardDefinition } from './LinkCard';
 import { UpdatedBlentosCardDefitition } from './SpecialCards/UpdatedBlentos';
 import { TextCardDefinition } from './TextCard';
 import type { CardDefinition } from './types';
+import { YoutubeCardDefinition } from './YoutubeVideo';
 
 export const AllCardDefinitions = [
 	ImageCardDefinition,
 	TextCardDefinition,
 	LinkCardDefinition,
-	UpdatedBlentosCardDefitition
+	UpdatedBlentosCardDefitition,
+	YoutubeCardDefinition
 ] as const;
 
 export const CardDefinitionsByType = AllCardDefinitions.reduce(

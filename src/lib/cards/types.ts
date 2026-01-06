@@ -15,6 +15,10 @@ export type SettingsModalComponentProps = {
 	onCancel: () => void;
 };
 
+export type SidebarComponentProps = {
+	onclick: () => void;
+};
+
 export type CardDefinition = {
 	cardComponent: Component<BaseCardProps>;
 	editingCardComponent: Component<BaseEditingCardProps>;
@@ -27,4 +31,6 @@ export type CardDefinition = {
 	}>;
 
 	upload?: (item: Item) => Promise<Item>;
+
+	sidebarComponent?: Component<SidebarComponentProps>;
 };

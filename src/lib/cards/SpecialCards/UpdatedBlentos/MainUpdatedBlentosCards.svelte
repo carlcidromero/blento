@@ -39,7 +39,7 @@
 			class=" hover:bg-base-200 dark:hover:bg-base-800 mb-4 flex h-fit min-w-24 flex-col items-center justify-center gap-2 rounded-xl p-2"
 			target="_blank"
 		>
-			<div class="font-semibold">{profile.displayName || profile.handle}</div>
+			<div class="font-semibold line-clamp-2">{profile.displayName || profile.handle}</div>
 			<img src={profile.avatar} class="aspect-square size-20 rounded-full" alt="" />
 		</a>
 	{/each}

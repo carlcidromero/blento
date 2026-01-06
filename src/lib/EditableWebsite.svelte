@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { client, login } from '$lib/oauth/auth.svelte.js';
 
-	import { Navbar, Button, toast, Toaster, Toggle } from '@foxui/core';
+	import { Navbar, Button, toast, Toaster, Toggle, Sidebar } from '@foxui/core';
 	import { BlueskyLogin } from '@foxui/social';
 
 	import { margin, mobileMargin } from '$lib';
@@ -19,7 +19,7 @@
 	import { innerWidth } from 'svelte/reactivity/window';
 	import { TID } from '@atproto/common-web';
 	import EditingCard from './cards/Card/EditingCard.svelte';
-	import { CardDefinitionsByType } from './cards';
+	import { AllCardDefinitions, CardDefinitionsByType } from './cards';
 	import { tick, type Component } from 'svelte';
 	import type { CreationModalComponentProps } from './cards/types';
 	import { dev } from '$app/environment';
@@ -75,6 +75,12 @@
 	let maxHeight = $derived(items.reduce((max, item) => Math.max(max, getY(item) + getH(item)), 0));
 
 	function newCard(type: string = 'link') {
+		// close sidebar if open
+		const popover = document.getElementById('mobile-menu');
+		if (popover) {
+			popover.hidePopover();
+		}
+
 		let item: Item = {
 			id: TID.nextStr(),
 			x: 0,
@@ -167,6 +173,8 @@
 			description: 'Your website has been saved!'
 		});
 	}
+
+	const sidebarItems = AllCardDefinitions.filter((cardDef) => cardDef.sidebarComponent);
 </script>
 
 {#if !dev}
@@ -317,6 +325,12 @@
 	</div>
 </div>
 
+<Sidebar mobileOnly mobileClasses="lg:block">
+	{#each sidebarItems as cardDef}
+		<cardDef.sidebarComponent onclick={() => newCard(cardDef.type)} />
+	{/each}
+</Sidebar>
+
 {#if (!client.isLoggedIn && !client.isInitializing) || client.profile?.did === did}
 	<Navbar
 		class={[
@@ -389,6 +403,25 @@
 					/>
 				</svg>
 			</Button>
+
+			{#if dev}
+				<Button
+					size="iconLg"
+					variant="ghost"
+					class="backdrop-blur-none"
+					popovertarget="mobile-menu"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke-width="1.5"
+						stroke="currentColor"
+					>
+						<path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+					</svg>
+				</Button>
+			{/if}
 
 			<!-- for special stuff -->
 			{#if handle === 'blento.app'}
