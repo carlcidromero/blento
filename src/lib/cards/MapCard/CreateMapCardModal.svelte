@@ -44,6 +44,20 @@
 		<Alert type="error" title="Failed to create map card"><span>{errorMessage}</span></Alert>
 	{/if}
 
+	<p class="text-xs">
+		Geocoding by <a
+			href="https://nominatim.openstreetmap.org/"
+			class="text-accent-800 dark:text-accent-300"
+			target="_blank">Nominatim</a
+		>
+		/ ©
+		<a
+			href="https://www.openstreetmap.org/copyright"
+			class="text-accent-800 dark:text-accent-300"
+			target="_blank">OpenStreetMap contributors</a
+		>
+	</p>
+
 	<div class="mt-4 flex justify-end gap-2">
 		<Button onclick={oncancel} variant="ghost">Cancel</Button>
 		<Button

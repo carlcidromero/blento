@@ -1,3 +1,4 @@
+import { env } from '$env/dynamic/private';
 import { json } from '@sveltejs/kit';
 
 export async function GET({ url }) {
@@ -8,10 +9,14 @@ export async function GET({ url }) {
 
 	const nomUrl =
 		'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q);
-	console.log(url);
 
 	try {
-		const data = await fetch(nomUrl);
+		const data = await fetch(nomUrl, {
+			headers: {
+				'User-Agent': 'blento.app/0.1 (contact: flobit.dev@gmail.com)',
+				Referer: env.PUBLIC_DOMAIN || 'https://blento.app'
+			}
+		});
 		console.error(data.status, data.statusText);
 		const location = await data.json();
 
