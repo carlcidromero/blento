@@ -21,7 +21,7 @@
 			// @ts-ignore
 			leaflet = await import('leaflet');
 
-			const location = [item.cardData.lat, item.cardData.lon];
+			const location = [parseFloat(item.cardData.lat), parseFloat(item.cardData.lon)];
 
 			lMap = leaflet
 				.map(map, {

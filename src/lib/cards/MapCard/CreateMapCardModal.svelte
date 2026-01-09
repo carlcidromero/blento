@@ -21,8 +21,8 @@
 
 				if (!data.lat || !data.lon) throw new Error('lat or lon not found');
 
-				item.cardData.lat = parseFloat(data.lat);
-				item.cardData.lon = parseFloat(data.lon);
+				item.cardData.lat = data.lat;
+				item.cardData.lon = data.lon;
 			} else {
 				throw new Error('response not ok');
 			}

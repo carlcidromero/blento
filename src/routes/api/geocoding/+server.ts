@@ -7,9 +7,9 @@ export async function GET({ url }) {
 	}
 
 	try {
-		const data = await fetch(
-			'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q)
-		);
+		const url = 'https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q);
+		console.log(url);
+		const data = await fetch(url);
 		const location = await data.json();
 
 		return json(location[0]);
