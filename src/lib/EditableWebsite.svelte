@@ -210,7 +210,7 @@
 
 <div
 	class={[
-		'@container/wrapper relative w-screen',
+		'@container/wrapper relative w-full',
 		showingMobileView
 			? 'bg-base-50 dark:bg-base-950 my-4 min-h-[calc(100dhv-2em)] rounded-2xl lg:mx-auto lg:w-[400px]'
 			: ''

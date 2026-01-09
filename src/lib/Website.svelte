@@ -36,7 +36,7 @@
 	});
 </script>
 
-<div class="@container/wrapper relative w-screen">
+<div class="@container/wrapper relative w-full">
 	<Profile {handle} {did} {data} showEditButton={true} />
 
 	<div class="mx-auto max-w-2xl lg:grid lg:max-w-none lg:grid-cols-4 xl:grid-cols-3">
