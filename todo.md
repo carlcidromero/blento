@@ -14,7 +14,7 @@
     - social accounts card (multiple)
     - cartoons: aka https://www.opendoodles.com/
     - excalidraw
-    - map
+    - [x] map
     - [x] youtube video
     - youtube channel
     - guestbook
@@ -28,6 +28,11 @@
     - smoke signal
     - statusphere.xyz
 - add some caching to user data
+
+- other fun card ideas:
+    - svader
+    - zdog
+    - tixy
 
 - image cards: different images for dark and light mode
 

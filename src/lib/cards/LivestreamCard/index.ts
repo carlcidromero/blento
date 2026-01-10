@@ -4,6 +4,7 @@ import { getImageBlobUrl } from '$lib/website/utils';
 import EmbedCard from '../EmbedCard/EmbedCard.svelte';
 import type { CardDefinition } from '../types';
 import LivestreamCard from './LivestreamCard.svelte';
+import LivestreamEmbedCard from './LivestreamEmbedCard.svelte';
 import SidebarItemEmbedLivestreamCard from './SidebarItemEmbedLivestreamCard.svelte';
 import SidebarItemLivestreamCard from './SidebarItemLivestreamCard.svelte';
 
@@ -68,7 +69,7 @@ export const LivestreamCardDefitition = {
 
 export const LivestreamEmbedCardDefitition = {
 	type: 'livestreamEmbed',
-	contentComponent: EmbedCard,
+	contentComponent: LivestreamEmbedCard,
 	sidebarComponent: SidebarItemEmbedLivestreamCard,
 	createNew: (card) => {
 		card.w = 2;

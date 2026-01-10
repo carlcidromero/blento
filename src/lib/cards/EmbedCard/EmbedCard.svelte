@@ -6,7 +6,7 @@
 
 <iframe
 	src={item.cardData.href}
-	sandbox="allow-scripts allow-same-origin"
+	sandbox="allow-scripts"
 	referrerpolicy="no-referrer"
 	class="absolute inset-0 h-full w-full"
 	title=""
