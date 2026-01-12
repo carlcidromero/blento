@@ -1,19 +1,21 @@
 # todo
 
-- video card or image from bluesky
+- [x] video card or image from bluesky
 - general video card
 - edit already created cards (e.g. change link)
 - link card: save favicon and og image to pds
 - [x] more cards list
-- paste handler for card creation
+- paste handler for card creation (+ when entering link)
 - text cards: align text top middle bottom and left center right
 - change general settings:
     - show profile
     - base, accent color
     - title
     - favicon
+- set custom card size
 
-- og images
+- [x] og images
+- separate og image for main page
 
 - more cards:
     - instagram
