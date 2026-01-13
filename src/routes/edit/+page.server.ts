@@ -1,7 +1,14 @@
 import { loadData } from '$lib/website/load';
 import { env } from '$env/dynamic/public';
 
-export async function load() {
-	const data = await loadData(env.PUBLIC_HANDLE);
-	return { ...data, handle: env.PUBLIC_HANDLE };
+export async function load({ url, platform }) {
+	const hostname = url.hostname;
+
+	let handle = env.PUBLIC_HANDLE;
+	if (hostname === 'flo-bit.blento.app') {
+		handle = 'flo-bit.dev';
+	}
+
+	const data = await loadData(handle, platform);
+	return { ...data, handle };
 }
