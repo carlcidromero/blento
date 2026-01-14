@@ -268,7 +268,7 @@ export async function refreshData(data: { updatedAt?: number; handle: string }) 
 	const FIVE_MINUTES = 5 * 60 * 1000;
 	const now = Date.now();
 
-	if (now - (data.updatedAt || 0) > FIVE_MINUTES) {
+	if (now - (data.updatedAt || 0) > FIVE_MINUTES && data.handle !== 'blento.app') {
 		try {
 			await fetch('/' + data.handle + '/api/refreshData');
 			console.log('successfully refreshed data', data.handle);
