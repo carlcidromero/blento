@@ -45,7 +45,7 @@
 			<div
 				class="text-base-600 dark:text-base-400 prose dark:prose-invert prose-a:text-accent-500 prose-a:no-underline"
 			>
-				{@html marked.parse(profileData.description ?? '', { renderer })}
+				{@html marked.parse(profileData?.description ?? '', { renderer })}
 			</div>
 		</div>
 
