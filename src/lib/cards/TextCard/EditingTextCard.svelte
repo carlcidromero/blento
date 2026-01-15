@@ -23,6 +23,8 @@ $inspect(textSizeClasses[item.cardData.textSize as number]);
 		textSizeClasses[(item.cardData.textSize ?? 0) as number]
 	)}
 	onclick={() => {
+		if(editor?.isFocused) return;
+		
 		editor?.commands.focus('end');
 	}}
 >
