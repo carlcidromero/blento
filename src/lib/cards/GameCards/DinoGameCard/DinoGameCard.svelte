@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { ContentComponentProps } from '../types';
+	import type { ContentComponentProps } from '../../types';
 	import { onMount, onDestroy } from 'svelte';
 
 	let { item }: ContentComponentProps = $props();
@@ -16,11 +16,9 @@
 	// Sprite images (processed with transparent backgrounds)
 	let spritesLoaded = $state(false);
 	const sprites: Record<string, HTMLCanvasElement> = {};
-	let tilemap: HTMLImageElement | null = null;
 
 	// Tile size (original is 16x16)
 	const TILE_SIZE = 16;
-	const TILEMAP_COLS = 20;
 
 	// Dynamic scaling - will be calculated based on canvas size
 	let scale = 2.5;
@@ -88,11 +86,7 @@
 	};
 
 	// Extract a tile from the tilemap and process it (white to black)
-	function extractTile(
-		img: HTMLImageElement,
-		row: number,
-		col: number
-	): HTMLCanvasElement {
+	function extractTile(img: HTMLImageElement, row: number, col: number): HTMLCanvasElement {
 		const offscreen = document.createElement('canvas');
 		offscreen.width = TILE_SIZE;
 		offscreen.height = TILE_SIZE;
@@ -105,24 +99,6 @@
 
 		offCtx.drawImage(img, sx, sy, TILE_SIZE, TILE_SIZE, 0, 0, TILE_SIZE, TILE_SIZE);
 
-		// Process: turn white to black for light mode
-		const imageData = offCtx.getImageData(0, 0, TILE_SIZE, TILE_SIZE);
-		const data = imageData.data;
-
-		for (let i = 0; i < data.length; i += 4) {
-			const r = data[i];
-			const g = data[i + 1];
-			const b = data[i + 2];
-
-			// Turn white/near-white pixels to black
-			if (r > 220 && g > 220 && b > 220) {
-				data[i] = 0;
-				data[i + 1] = 0;
-				data[i + 2] = 0;
-			}
-		}
-
-		offCtx.putImageData(imageData, 0, 0);
 		return offscreen;
 	}
 
@@ -130,8 +106,6 @@
 		return new Promise<void>((resolve) => {
 			const img = new Image();
 			img.onload = () => {
-				tilemap = img;
-				// Extract all sprites from the tilemap
 				for (const [key, pos] of Object.entries(SPRITE_POSITIONS)) {
 					sprites[key] = extractTile(img, pos.row, pos.col);
 				}
@@ -485,9 +459,9 @@
 		// Draw game over text (no overlay background)
 		if (gameState === 'gameover') {
 			ctx.fillStyle = '#000000';
-			ctx.font = `bold ${Math.max(14, Math.floor(16 * (scale / 2.5)))}px monospace`;
+			ctx.font = `bold ${Math.max(14, Math.floor(20 * (scale / 2.5)))}px monospace`;
 			ctx.textAlign = 'center';
-			ctx.fillText('GAME OVER', canvasWidth / 2, canvasHeight / 2 - 30);
+			ctx.fillText('GAME OVER', canvasWidth / 2, canvasHeight / 2 - 40);
 		}
 
 		animationId = requestAnimationFrame(gameLoop);
@@ -503,24 +477,24 @@
 		initGroundTiles();
 	}
 
+	let resizeObserver: ResizeObserver | undefined = $state();
+
 	onMount(async () => {
 		ctx = canvas.getContext('2d');
 		await loadSprites();
 		resizeCanvas();
 
-		const resizeObserver = new ResizeObserver(() => {
+		resizeObserver = new ResizeObserver(() => {
 			resizeCanvas();
 		});
 		resizeObserver.observe(canvas.parentElement!);
 
 		gameLoop();
-
-		return () => {
-			resizeObserver.disconnect();
-		};
 	});
 
 	onDestroy(() => {
+		resizeObserver?.disconnect();
+
 		if (animationId) {
 			cancelAnimationFrame(animationId);
 		}
@@ -530,12 +504,13 @@
 <svelte:window onkeydown={handleKeyDown} onkeyup={handleKeyUp} />
 
 <div class="relative h-full w-full overflow-hidden">
-	<canvas bind:this={canvas} class="h-full w-full dark:invert" ontouchstart={handleTouch}></canvas>
+	<canvas bind:this={canvas} class="h-full w-full invert dark:invert-0" ontouchstart={handleTouch}
+	></canvas>
 
 	{#if gameState === 'idle' || gameState === 'gameover'}
 		<button
 			onclick={startGame}
-			class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform cursor-pointer rounded-lg border-2 border-black bg-white/30 px-6 py-3 font-mono text-sm font-bold text-black transition-colors hover:bg-black hover:text-white"
+			class="bg-base-50/80 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 transform cursor-pointer rounded-lg border-2 border-black px-6 py-3 font-mono font-bold text-black transition-colors duration-200 hover:bg-black hover:text-white"
 		>
 			{gameState === 'gameover' ? 'PLAY AGAIN' : 'START'}
 		</button>

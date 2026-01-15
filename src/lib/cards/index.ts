@@ -3,7 +3,7 @@ import { ATProtoCollectionsCardDefinition } from './ATProtoCollectionsCard';
 import { BigSocialCardDefinition } from './BigSocialCard';
 import { BlueskyMediaCardDefinition } from './BlueskyMediaCard';
 import { BlueskyPostCardDefinition } from './BlueskyPostCard';
-import { DinoGameCardDefinition } from './DinoGameCard';
+import { DinoGameCardDefinition } from './GameCards/DinoGameCard';
 import { EmbedCardDefinition } from './EmbedCard';
 import { ImageCardDefinition } from './ImageCard';
 import { LinkCardDefinition } from './LinkCard';
