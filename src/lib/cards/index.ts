@@ -3,6 +3,7 @@ import { ATProtoCollectionsCardDefinition } from './ATProtoCollectionsCard';
 import { BigSocialCardDefinition } from './BigSocialCard';
 import { BlueskyMediaCardDefinition } from './BlueskyMediaCard';
 import { BlueskyPostCardDefinition } from './BlueskyPostCard';
+import { DinoGameCardDefinition } from './GameCards/DinoGameCard';
 import { EmbedCardDefinition } from './EmbedCard';
 import { ImageCardDefinition } from './ImageCard';
 import { LinkCardDefinition } from './LinkCard';
@@ -28,7 +29,8 @@ export const AllCardDefinitions = [
 	MapCardDefinition,
 	ATProtoCollectionsCardDefinition,
 	SectionCardDefinition,
-	BlueskyMediaCardDefinition
+	BlueskyMediaCardDefinition,
+	DinoGameCardDefinition
 ] as const;
 
 export const CardDefinitionsByType = AllCardDefinitions.reduce(
