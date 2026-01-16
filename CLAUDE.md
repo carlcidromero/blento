@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Blento is a Bluesky-powered customizable bento grid website builder. Users authenticate via ATProto OAuth and can create personalized websites with draggable/resizable cards that are stored directly in their Bluesky PDS (Personal Data Server) using the `app.blento.card` collection.
+Blento is a Bluesky-powered customizable bento grid website builder. Users authenticate via ATProto OAuth and create draggable/resizable cards stored in their Bluesky PDS (Personal Data Server) using the `app.blento.card` collection.
 
 ## Commands
 
@@ -32,21 +32,22 @@ The site uses an 8-column grid layout (`COLUMNS = 8` in `src/lib/index.ts`). Eac
 - Desktop position/size: `x`, `y`, `w`, `h`
 - Mobile position/size: `mobileX`, `mobileY`, `mobileW`, `mobileH`
 
-Grid margins: 20px desktop, 12px mobile.
+Grid margins: 16px desktop, 12px mobile.
 
 ### Key Components
 
 **Website Rendering:**
 
-- `Website.svelte` - Read-only view of a user's bento grid
-- `EditableWebsite.svelte` - Full editing interface with drag-and-drop, card creation, and save functionality
+- `src/lib/website/Website.svelte` - Read-only view of a user's bento grid
+- `src/lib/website/EditableWebsite.svelte` - Full editing interface with drag-and-drop, card creation, and save functionality
+- `src/lib/website/Settings.svelte` and `src/lib/website/Profile.svelte` - Editing panels and profile UI
 - Styling: two colors: base color (one the gray-ish tailwind colors: `gray`, `neutral`, `stone`, ...) and accent color (one of the not-gray-ish tailwind color: `rose`, `red`, `amber`, ...)
 
 **Card System (`src/lib/cards/`):**
 
 - `CardDefinition` type in `types.ts` defines the interface for card types
 - Each card type exports a definition with: `type`, `contentComponent`, optional `editingContentComponent`, `creationModalComponent`, `sidebarComponent`, `loadData`, `upload` (see more info and description in `src/lib/cards/types.ts`)
-- Card types: Text, Link, Image, Youtube, BlueskyPost, Embed, Map, Livestream, ATProtoCollections, Section
+- Card types include Text, Link, Image, Bluesky, Embed, Map, Livestream, ATProto collections, and special cards (see `src/lib/cards`).
 - `AllCardDefinitions` and `CardDefinitionsByType` in `index.ts` aggregate all card types
 - See e.g. `src/lib/cards/EmbedCard/` and `src/lib/cards/LivestreamCard/` for examples of implementation.
 - Cards should be styled to work in light and dark mode (with `dark:` class modifier) as well as when cards are colorful (= bg-color-500 for the card background) (with `accent:` modifier).
@@ -59,18 +60,19 @@ Grid margins: 20px desktop, 12px mobile.
 
 **Data Loading (`src/lib/website/`):**
 
-- `load.ts` - Fetches user data from their PDS, with Cloudflare KV caching (`USER_DATA_CACHE`)
+- `load.ts` - Fetches user data from their PDS, with optional KV caching via `UserCache`
 - `data.ts` - Defines which collections/records to fetch
 - `context.ts` - Svelte contexts for passing DID, handle, and data down the component tree
 
 ### Routes
 
 - `/` - Landing page
-- `/[handle]` - View a user's bento site (loads from their PDS)
-- `/[handle]/edit` - Edit mode for the user's site
+- `/[handle]/[[page]]` - View a user's bento site (loads from their PDS)
+- `/[handle]/[[page]]/edit` - Edit mode for a user's site page
 - `/edit` - Self-hosted edit mode
 - `/api/links` - Link preview API
 - `/api/geocoding` - Geocoding API for map cards
+- `/api/instagram`, `/api/reloadRecent`, `/api/update` - Additional data endpoints
 
 ### Item Type
 
@@ -80,6 +82,6 @@ Cards are represented by the `Item` type (`src/lib/types.ts`) with grid position
 
 `src/lib/helper.ts` contains grid layout algorithms:
 
-- `fixCollisions` - Push cards down when they overlap
+- `fixAllCollisions` - Push cards down when they overlap
 - `compactItems` - Move cards up to fill gaps
 - `simulateFinalPosition` - Preview where a dragged card will land
