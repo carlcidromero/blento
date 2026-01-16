@@ -66,6 +66,11 @@
 		y: number;
 		mouseDeltaX: number;
 		mouseDeltaY: number;
+		// For hysteresis - track last decision to prevent flickering
+		lastTargetId: string | null;
+		lastPlacement: 'above' | 'below' | null;
+		// Store original positions to reset from during drag
+		originalPositions: Map<string, { x: number; y: number; mobileX: number; mobileY: number }>;
 	} = $state({
 		element: null,
 		item: null,
@@ -74,7 +79,10 @@
 		x: -1,
 		y: -1,
 		mouseDeltaX: 0,
-		mouseDeltaY: 0
+		mouseDeltaY: 0,
+		lastTargetId: null,
+		lastPlacement: null,
+		originalPositions: new Map()
 	});
 
 	let showingMobileView = $state(false);
@@ -249,33 +257,127 @@
 		e: DragEvent & {
 			currentTarget: EventTarget & HTMLDivElement;
 		}
-	) {
-		if (!container) return;
+	): { x: number; y: number; swapWithId: string | null; placement: 'above' | 'below' | null } | undefined {
+		if (!container || !activeDragElement.item) return;
 
+		// x, y represent the top-left corner of the dragged card
 		const x = e.clientX + activeDragElement.mouseDeltaX;
 		const y = e.clientY + activeDragElement.mouseDeltaY;
 
 		const rect = container.getBoundingClientRect();
+		const currentMargin = isMobile ? mobileMargin : margin;
+		const cellSize = (rect.width - currentMargin * 2) / COLUMNS;
 
-		debugPoint.x = x - rect.left;
-		debugPoint.y = y - rect.top + margin;
-		console.log(rect.top);
+		// Get card dimensions based on current view mode
+		const cardW = isMobile ? (activeDragElement.item?.mobileW ?? activeDragElement.w) : activeDragElement.w;
+		const cardH = isMobile ? (activeDragElement.item?.mobileH ?? activeDragElement.h) : activeDragElement.h;
 
+		// Get dragged card's original position
+		const draggedOrigPos = activeDragElement.originalPositions.get(activeDragElement.item.id);
+		const draggedOrigX = draggedOrigPos ? (isMobile ? draggedOrigPos.mobileX : draggedOrigPos.x) : 0;
+		const draggedOrigY = draggedOrigPos ? (isMobile ? draggedOrigPos.mobileY : draggedOrigPos.y) : 0;
+
+		// Calculate raw grid position based on top-left of dragged card
 		let gridX = clamp(
-			Math.floor(((x - rect.left) / rect.width) * 8),
+			Math.round((x - rect.left - currentMargin) / cellSize),
 			0,
-			COLUMNS - (activeDragElement.w ?? 0)
+			COLUMNS - cardW
 		);
 		gridX = Math.floor(gridX / 2) * 2;
+
 		let gridY = Math.max(
-			Math.round(((y - rect.top + margin) / (rect.width - margin)) * COLUMNS),
+			Math.round((y - rect.top - currentMargin) / cellSize),
 			0
 		);
+
 		if (isMobile) {
 			gridX = Math.floor(gridX / 2) * 2;
 			gridY = Math.floor(gridY / 2) * 2;
 		}
-		return { x: gridX, y: gridY };
+
+		// Find if we're hovering over another card (using ORIGINAL positions)
+		const centerGridY = gridY + cardH / 2;
+		const centerGridX = gridX + cardW / 2;
+
+		let swapWithId: string | null = null;
+		let placement: 'above' | 'below' | null = null;
+
+		for (const other of items) {
+			if (other === activeDragElement.item) continue;
+
+			// Use original positions for hit testing
+			const origPos = activeDragElement.originalPositions.get(other.id);
+			if (!origPos) continue;
+
+			const otherX = isMobile ? origPos.mobileX : origPos.x;
+			const otherY = isMobile ? origPos.mobileY : origPos.y;
+			const otherW = isMobile ? other.mobileW : other.w;
+			const otherH = isMobile ? other.mobileH : other.h;
+
+			// Check if dragged card's center point is within this card's original bounds
+			if (centerGridX >= otherX && centerGridX < otherX + otherW &&
+				centerGridY >= otherY && centerGridY < otherY + otherH) {
+
+				// Check if this is a swap situation:
+				// Cards have the same dimensions and are on the same row
+				const canSwap = cardW === otherW && cardH === otherH && draggedOrigY === otherY;
+
+				if (canSwap) {
+					// Swap positions
+					swapWithId = other.id;
+					gridX = otherX;
+					gridY = otherY;
+					placement = null;
+
+					activeDragElement.lastTargetId = other.id;
+					activeDragElement.lastPlacement = null;
+				} else {
+					// Vertical placement (above/below)
+					// Detect drag direction: if dragging up, always place above
+					const isDraggingUp = gridY < draggedOrigY;
+
+					if (isDraggingUp) {
+						// When dragging up, always place above
+						placement = 'above';
+					} else {
+						// When dragging down, use top/bottom half logic
+						const midpointY = otherY + otherH / 2;
+						const hysteresis = 0.3;
+
+						if (activeDragElement.lastTargetId === other.id && activeDragElement.lastPlacement) {
+							if (activeDragElement.lastPlacement === 'above') {
+								placement = centerGridY > midpointY + hysteresis ? 'below' : 'above';
+							} else {
+								placement = centerGridY < midpointY - hysteresis ? 'above' : 'below';
+							}
+						} else {
+							placement = centerGridY < midpointY ? 'above' : 'below';
+						}
+					}
+
+					activeDragElement.lastTargetId = other.id;
+					activeDragElement.lastPlacement = placement;
+
+					if (placement === 'above') {
+						gridY = otherY;
+					} else {
+						gridY = otherY + otherH;
+					}
+				}
+				break;
+			}
+		}
+
+		// If we're not over any card, clear the tracking
+		if (!swapWithId && !placement) {
+			activeDragElement.lastTargetId = null;
+			activeDragElement.lastPlacement = null;
+		}
+
+		debugPoint.x = x - rect.left;
+		debugPoint.y = y - rect.top + currentMargin;
+
+		return { x: gridX, y: gridY, swapWithId, placement };
 	}
 
 	let linkValue = $state('');
@@ -402,21 +504,55 @@
 				ondragover={(e) => {
 					e.preventDefault();
 
-					const cell = getDragXY(e);
-					if (!cell) return;
+					const result = getDragXY(e);
+					if (!result) return;
 
-					activeDragElement.x = cell.x;
-					activeDragElement.y = cell.y;
+					activeDragElement.x = result.x;
+					activeDragElement.y = result.y;
 
 					if (activeDragElement.item) {
-						if (isMobile) {
-							activeDragElement.item.mobileX = cell.x;
-							activeDragElement.item.mobileY = cell.y;
-						} else {
-							activeDragElement.item.x = cell.x;
-							activeDragElement.item.y = cell.y;
+						// Get dragged card's original position for swapping
+						const draggedOrigPos = activeDragElement.originalPositions.get(activeDragElement.item.id);
+
+						// Reset all items to original positions first
+						for (const it of items) {
+							const origPos = activeDragElement.originalPositions.get(it.id);
+							if (origPos && it !== activeDragElement.item) {
+								if (isMobile) {
+									it.mobileX = origPos.mobileX;
+									it.mobileY = origPos.mobileY;
+								} else {
+									it.x = origPos.x;
+									it.y = origPos.y;
+								}
+							}
 						}
 
+						// Update dragged item position
+						if (isMobile) {
+							activeDragElement.item.mobileX = result.x;
+							activeDragElement.item.mobileY = result.y;
+						} else {
+							activeDragElement.item.x = result.x;
+							activeDragElement.item.y = result.y;
+						}
+
+						// Handle horizontal swap
+						if (result.swapWithId && draggedOrigPos) {
+							const swapTarget = items.find(it => it.id === result.swapWithId);
+							if (swapTarget) {
+								// Move swap target to dragged card's original position
+								if (isMobile) {
+									swapTarget.mobileX = draggedOrigPos.mobileX;
+									swapTarget.mobileY = draggedOrigPos.mobileY;
+								} else {
+									swapTarget.x = draggedOrigPos.x;
+									swapTarget.y = draggedOrigPos.y;
+								}
+							}
+						}
+
+						// Now fix collisions (with compacting)
 						fixCollisions(items, activeDragElement.item, isMobile);
 					}
 
@@ -449,11 +585,15 @@
 							activeDragElement.item.y = cell.y;
 						}
 
+						// Fix collisions and compact items after drag ends
 						fixCollisions(items, activeDragElement.item, isMobile);
 					}
 					activeDragElement.x = -1;
 					activeDragElement.y = -1;
 					activeDragElement.element = null;
+					activeDragElement.item = null;
+					activeDragElement.lastTargetId = null;
+					activeDragElement.lastPlacement = null;
 					return true;
 				}}
 				class="@container/grid relative col-span-3 px-2 py-8 @5xl/wrapper:px-8"
@@ -484,11 +624,20 @@
 							activeDragElement.h = item.h;
 							activeDragElement.item = item;
 
+							// Store original positions of all items
+							activeDragElement.originalPositions = new Map();
+							for (const it of items) {
+								activeDragElement.originalPositions.set(it.id, {
+									x: it.x,
+									y: it.y,
+									mobileX: it.mobileX,
+									mobileY: it.mobileY
+								});
+							}
+
 							const rect = target.getBoundingClientRect();
 							activeDragElement.mouseDeltaX = rect.left - e.clientX;
 							activeDragElement.mouseDeltaY = rect.top - e.clientY;
-							console.log(activeDragElement.mouseDeltaY);
-							console.log(rect.width);
 						}}
 					>
 						<EditingCard bind:item={items[i]} />

@@ -38,7 +38,7 @@ export const overlaps = (a: Item, b: Item, mobile: boolean = false) => {
 	return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 };
 
-export function fixCollisions(items: Item[], movedItem: Item, mobile: boolean = false) {
+export function fixCollisions(items: Item[], movedItem: Item, mobile: boolean = false, skipCompact: boolean = false) {
 	const clampX = (item: Item) => {
 		if (mobile) item.mobileX = clamp(item.mobileX, 0, COLUMNS - item.mobileW);
 		else item.x = clamp(item.x, 0, COLUMNS - item.w);
@@ -93,7 +93,9 @@ export function fixCollisions(items: Item[], movedItem: Item, mobile: boolean = 
 		else it.x = clamp(it.x, 0, COLUMNS - it.w);
 	}
 
-	compactItems(items, mobile);
+	if (!skipCompact) {
+		compactItems(items, mobile);
+	}
 }
 
 // Fix all collisions between items (not just one moved item)
