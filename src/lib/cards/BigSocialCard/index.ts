@@ -19,6 +19,23 @@ export const BigSocialCardDefinition = {
 		card.mobileW = 4;
 		card.mobileH = 4;
 	},
+	canChange: (item) => {
+		const href = item.cardData?.href;
+		if (!href) return false;
+		return Boolean(detectPlatform(href));
+	},
+	change: (item) => {
+		const href = item.cardData?.href;
+		const platform = href ? detectPlatform(href) : null;
+		if (!href || !platform) return item;
+		item.cardData = {
+			href,
+			platform,
+			color: platformsData[platform].hex
+		};
+		return item;
+	},
+	name: 'Social Icon',
 	allowSetColor: false,
 	defaultColor: 'transparent',
 	minW: 2,
@@ -32,7 +49,8 @@ export const BigSocialCardDefinition = {
 		item.cardData.href = url;
 
 		return item;
-	}
+	},
+	urlHandlerPriority: 1
 } as CardDefinition & { type: 'bigsocial' };
 
 import {
