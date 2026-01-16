@@ -1,3 +1,4 @@
+import { validateLink } from '$lib/helper';
 import type { CardDefinition } from '../types';
 import EditingLinkCard from './EditingLinkCard.svelte';
 import LinkCard from './LinkCard.svelte';
@@ -11,10 +12,22 @@ export const LinkCardDefinition = {
 		card.cardType = 'link';
 	},
 	settingsComponent: LinkCardSettings,
+
+	name: 'Link Card',
+	canChange: (item) => Boolean(validateLink(item.cardData?.href)),
+	change: (item) => {
+		const href = validateLink(item.cardData?.href);
+		if (!href) return item;
+
+		item.cardData = {
+			href,
+			hasFetched: false
+		};
+		return item;
+	},
 	onUrlHandler: (url, item) => {
 		item.cardData.href = url;
 		item.cardData.domain = new URL(url).hostname;
-		item.cardData.hasFetched = false;
 		return item;
 	},
 	urlHandlerPriority: 0

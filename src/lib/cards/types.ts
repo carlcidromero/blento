@@ -62,4 +62,9 @@ export type CardDefinition = {
 
 	onUrlHandler?: (url: string, item: Item) => Item | null;
 	urlHandlerPriority?: number;
+
+	canChange?: (item: Item) => boolean;
+	change?: (item: Item) => Item;
+
+	name?: string;
 };
