@@ -869,6 +869,7 @@
 					</svg>
 				</Button>
 
+				{#if dev}
 				<Button
 					size="iconLg"
 					variant="ghost"
@@ -891,6 +892,7 @@
 						/>
 					</svg>
 				</Button>
+				{/if}
 
 				<Button
 					size="iconLg"

@@ -59,11 +59,5 @@ export const VideoCardDefinition = {
 	},
 	settingsComponent: VideoCardSettings,
 
-	canChange: (item) => Boolean(item.cardData.video),
-
-	change: (item) => {
-		return item;
-	},
-	name: 'Video Card',
-	sidebarButtonText: 'Video'
+	name: 'Video Card'
 } as CardDefinition & { type: 'video' };

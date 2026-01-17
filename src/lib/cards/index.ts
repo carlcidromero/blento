@@ -14,7 +14,7 @@ import { UpdatedBlentosCardDefitition } from './SpecialCards/UpdatedBlentos';
 import { TextCardDefinition } from './TextCard';
 import type { CardDefinition } from './types';
 import { VideoCardDefinition } from './VideoCard';
-import { YoutubeCardDefinition } from './YoutubeVideo';
+import { YoutubeCardDefinition } from './YoutubeVideoCard';
 import { BlueskyProfileCardDefinition } from './BlueskyProfileCard';
 
 export const AllCardDefinitions = [

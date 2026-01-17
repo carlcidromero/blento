@@ -1,9 +1,11 @@
 import type { CardDefinition } from '../types';
 import YoutubeCard from './YoutubeCard.svelte';
+import YoutubeCardSettings from './YoutubeCardSettings.svelte';
 
 export const YoutubeCardDefinition = {
 	type: 'youtubeVideo',
 	contentComponent: YoutubeCard,
+	settingsComponent: YoutubeCardSettings,
 	createNew: (card) => {
 		card.cardType = 'youtubeVideo';
 		card.cardData = {};

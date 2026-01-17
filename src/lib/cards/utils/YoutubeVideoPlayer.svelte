@@ -19,11 +19,14 @@
 
 <script lang="ts">
 	import { cn } from '@foxui/core';
-	import { onMount } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 
 	const { class: className }: { class?: string } = $props();
 
 	let Plyr = $state();
+
+	let player = $state();
+
 
 	onMount(async () => {
 		if (!Plyr) Plyr = (await import('plyr')).default;
@@ -60,11 +63,11 @@
 			player.play();
 			//player.fullscreen.enter();
 		});
-
-		return () => {
-			player.destroy();
-		};
 	});
+
+	onDestroy(() => {
+		player?.destroy();
+	})
 
 	let glow = 50;
 </script>
@@ -142,7 +145,7 @@
 
 <svg width="0" height="0">
 	<filter id="blur" y="-50%" x="-50%" width="300%" height="300%">
-		<feGaussianBlur in="SourceGraphic" stdDeviation={50} result="blurred" />
+		<feGaussianBlur in="SourceGraphic" stdDeviation={glow} result="blurred" />
 		<feColorMatrix type="saturate" in="blurred" values="3" />
 		<feComposite in="SourceGraphic" operator="over" />
 	</filter>
