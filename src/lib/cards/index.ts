@@ -16,6 +16,7 @@ import type { CardDefinition } from './types';
 import { VideoCardDefinition } from './VideoCard';
 import { YoutubeCardDefinition } from './YoutubeVideoCard';
 import { BlueskyProfileCardDefinition } from './BlueskyProfileCard';
+import { GithubProfileCardDefitition } from './GitHubProfileCard';
 
 export const AllCardDefinitions = [
 	ImageCardDefinition,
@@ -34,7 +35,8 @@ export const AllCardDefinitions = [
 	SectionCardDefinition,
 	BlueskyMediaCardDefinition,
 	DinoGameCardDefinition,
-	BlueskyProfileCardDefinition
+	BlueskyProfileCardDefinition,
+	GithubProfileCardDefitition
 ] as const;
 
 export const CardDefinitionsByType = AllCardDefinitions.reduce(

@@ -40,6 +40,7 @@ export type CardDefinition = {
 
 	// optionally load some extra data
 	loadData?: (
+		// all cards of that type
 		items: Item[],
 		{ did, handle, cache }: { did: string; handle: string; cache?: UserCache }
 	) => Promise<unknown>;
