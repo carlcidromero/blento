@@ -1,5 +1,5 @@
 import type { Component } from 'svelte';
-import type { Item } from '$lib/types';
+import type { Item, UserCache } from '$lib/types';
 
 export type CreationModalComponentProps = {
 	item: Item;
@@ -41,7 +41,7 @@ export type CardDefinition = {
 	// optionally load some extra data
 	loadData?: (
 		items: Item[],
-		{ did, handle, platform }: { did: string; handle: string; platform?: App.Platform }
+		{ did, handle, cache }: { did: string; handle: string; cache?: UserCache }
 	) => Promise<unknown>;
 
 	// show color selection popup
