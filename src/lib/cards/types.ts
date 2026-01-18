@@ -1,5 +1,5 @@
 import type { Component } from 'svelte';
-import type { Item } from '$lib/types';
+import type { Item, UserCache } from '$lib/types';
 
 export type CreationModalComponentProps = {
 	item: Item;
@@ -7,10 +7,9 @@ export type CreationModalComponentProps = {
 	oncancel: () => void;
 };
 
-export type SettingsModalComponentProps = {
+export type SettingsComponentProps = {
 	item: Item;
-	onsave: (item: Item) => void;
-	oncancel: () => void;
+	onclose: () => void;
 };
 
 export type SidebarComponentProps = {
@@ -37,12 +36,13 @@ export type CardDefinition = {
 	sidebarButtonText?: string;
 
 	// if this component exists, a settings button with a popover will be shown containing this component
-	settingsComponent?: Component<ContentComponentProps>;
+	settingsComponent?: Component<SettingsComponentProps>;
 
 	// optionally load some extra data
 	loadData?: (
+		// all cards of that type
 		items: Item[],
-		{ did, handle, platform }: { did: string; handle: string; platform?: App.Platform }
+		{ did, handle, cache }: { did: string; handle: string; cache?: UserCache }
 	) => Promise<unknown>;
 
 	// show color selection popup
@@ -62,4 +62,10 @@ export type CardDefinition = {
 	canResize?: boolean;
 
 	onUrlHandler?: (url: string, item: Item) => Item | null;
+	urlHandlerPriority?: number;
+
+	canChange?: (item: Item) => boolean;
+	change?: (item: Item) => Item;
+
+	name?: string;
 };

@@ -20,7 +20,6 @@ export const SectionCardDefinition = {
 		card.mobileW = COLUMNS;
 	},
 
-	sidebarButtonText: 'Section Headline',
 	defaultColor: 'transparent',
 	maxH: 1,
 	canResize: false

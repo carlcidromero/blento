@@ -1,9 +1,8 @@
 <script lang="ts">
-	import { getAdditionalUserData } from '$lib/helper';
 	import type { Item } from '$lib/types';
 	import { onMount } from 'svelte';
 	import { BlueskyPost } from '../../components/bluesky-post';
-	import { getDidContext, getHandleContext } from '$lib/website/context';
+	import { getAdditionalUserData, getDidContext, getHandleContext } from '$lib/website/context';
 	import { CardDefinitionsByType } from '..';
 
 	let { item }: { item: Item } = $props();

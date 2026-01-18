@@ -1,16 +1,15 @@
+import type { UserCache } from '$lib/types';
 import { loadData } from '$lib/website/load';
 import { ImageResponse } from '@ethercorps/sveltekit-og';
 
 export async function GET({ params, platform }) {
 	const handle = params.handle;
-	const data = await loadData(params.handle, platform);
 
-	console.log(data.data['app.bsky.actor.profile'].self);
-	const image =
-		'https://cdn.bsky.app/img/avatar/plain/' +
-		data.did +
-		'/' +
-		data.data['app.bsky.actor.profile'].self.value.avatar.ref.$link;
+	const cache = platform?.env?.USER_DATA_CACHE as unknown;
+
+	const data = await loadData(params.handle, cache as UserCache);
+
+	const image = data.profile.avatar;
 
 	const htmlString = `
 <div class="flex flex-col p-8 w-full h-full bg-neutral-900">

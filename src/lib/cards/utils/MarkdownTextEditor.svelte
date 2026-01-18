@@ -119,7 +119,7 @@
 	});
 </script>
 
-<div class="w-full" bind:this={element}></div>
+<div class="w-full cursor-text" bind:this={element}></div>
 
 <style>
 	:global(.tiptap p.is-editor-empty:first-child::before) {

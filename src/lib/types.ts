@@ -1,3 +1,6 @@
+import type { At } from '@atcute/client/lexicons';
+import type { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs';
+
 export type Item = {
 	id: string;
 
@@ -21,4 +24,42 @@ export type Item = {
 	updatedAt?: string;
 
 	version?: number;
+
+	page?: string;
+};
+
+export type WebsiteData = {
+	page: string;
+	did: string;
+	handle: string;
+
+	cards: Item[];
+	publication:
+		| {
+				url?: string;
+				name?: string;
+				description?: string;
+				icon?: At.Blob;
+				preferences?: {
+					/**
+					 * @deprecated
+					 *
+					 * use hideProfileSection instead
+					 */
+					hideProfile?: boolean;
+					// use this instead
+					hideProfileSection?: boolean;
+				};
+		  }
+		| undefined;
+	profile: ProfileViewDetailed;
+
+	additionalData: Record<string, unknown>;
+	updatedAt: number;
+	version?: number;
+};
+
+export type UserCache = {
+	get: (key: string) => string;
+	put: (key: string, value: string) => void;
 };

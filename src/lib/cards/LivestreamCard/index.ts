@@ -1,11 +1,9 @@
 import { client } from '$lib/oauth';
 import { listRecords } from '$lib/oauth/atproto';
-import { getImageBlobUrl } from '$lib/website/utils';
-import EmbedCard from '../EmbedCard/EmbedCard.svelte';
+import { getImageBlobUrl } from '$lib/oauth/utils';
 import type { CardDefinition } from '../types';
 import LivestreamCard from './LivestreamCard.svelte';
 import LivestreamEmbedCard from './LivestreamEmbedCard.svelte';
-import SidebarItemEmbedLivestreamCard from './SidebarItemEmbedLivestreamCard.svelte';
 import SidebarItemLivestreamCard from './SidebarItemLivestreamCard.svelte';
 
 export const LivestreamCardDefitition = {
@@ -17,6 +15,8 @@ export const LivestreamCardDefitition = {
 		card.h = 4;
 		card.mobileH = 8;
 		card.mobileW = 8;
+
+		card.cardType = 'latestLivestream';
 	},
 	loadData: async (items, { did }) => {
 		const records = await listRecords({ did, collection: 'place.stream.livestream', limit: 3 });
@@ -64,13 +64,30 @@ export const LivestreamCardDefitition = {
 		}
 
 		return latestLivestream;
-	}
+	},
+
+	onUrlHandler: (url, item) => {
+		console.log(url, 'https://stream.place/' + client.profile?.handle);
+		if (url === 'https://stream.place/' + client.profile?.handle) {
+			item.w = 4;
+			item.h = 4;
+			item.mobileH = 8;
+			item.mobileW = 8;
+			item.cardData.href = 'https://stream.place/' + client.profile?.handle;
+			return item;
+		}
+	},
+
+	canChange: (item) => item.cardData.href === 'https://stream.place/' + client.profile?.handle,
+
+	urlHandlerPriority: 5,
+
+	name: 'stream.place Card'
 } as CardDefinition & { type: 'latestLivestream' };
 
 export const LivestreamEmbedCardDefitition = {
 	type: 'livestreamEmbed',
 	contentComponent: LivestreamEmbedCard,
-	sidebarComponent: SidebarItemEmbedLivestreamCard,
 	createNew: (card) => {
 		card.w = 4;
 		card.h = 2;
@@ -78,7 +95,13 @@ export const LivestreamEmbedCardDefitition = {
 		card.mobileH = 4;
 
 		card.cardData = {
-			href: 'https://stream.place/embed/' + client.profile?.handle
+			href: 'https://stream.place/' + client.profile?.handle,
+			embed: 'https://stream.place/embed/' + client.profile?.handle
 		};
 	}
+	// canChange: (item) => item.cardData.href === 'https://stream.place/' + client.profile?.handle,
+
+	// change: (item) => {
+	// 	item.cardData.embed = 'https://stream.place/embed/' + client.profile?.handle;
+	// },
 } as CardDefinition & { type: 'livestreamEmbed' };

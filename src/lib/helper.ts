@@ -1,6 +1,9 @@
-import { createContext } from 'svelte';
-import type { Item } from './types';
-import { COLUMNS } from '$lib';
+import type { Item, WebsiteData } from './types';
+import { COLUMNS, margin, mobileMargin } from '$lib';
+import { CardDefinitionsByType } from './cards';
+import { deleteRecord, putRecord } from './oauth/atproto';
+import { toast } from '@foxui/core';
+import { TID } from '@atproto/common-web';
 
 export function clamp(value: number, min: number, max: number): number {
 	return Math.min(Math.max(value, min), max);
@@ -39,7 +42,12 @@ export const overlaps = (a: Item, b: Item, mobile: boolean = false) => {
 	return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 };
 
-export function fixCollisions(items: Item[], movedItem: Item, mobile: boolean = false) {
+export function fixCollisions(
+	items: Item[],
+	movedItem: Item,
+	mobile: boolean = false,
+	skipCompact: boolean = false
+) {
 	const clampX = (item: Item) => {
 		if (mobile) item.mobileX = clamp(item.mobileX, 0, COLUMNS - item.mobileW);
 		else item.x = clamp(item.x, 0, COLUMNS - item.w);
@@ -94,7 +102,9 @@ export function fixCollisions(items: Item[], movedItem: Item, mobile: boolean = 
 		else it.x = clamp(it.x, 0, COLUMNS - it.w);
 	}
 
-	compactItems(items, mobile);
+	if (!skipCompact) {
+		compactItems(items, mobile);
+	}
 }
 
 // Fix all collisions between items (not just one moved item)
@@ -226,7 +236,8 @@ export function cardsEqual(a: Item, b: Item) {
 		a.y === b.y &&
 		a.mobileX === b.mobileX &&
 		a.mobileY === b.mobileY &&
-		a.color === b.color
+		a.color === b.color &&
+		a.page === b.page
 	);
 }
 
@@ -257,18 +268,11 @@ export function setPositionOfNewItem(newItem: Item, items: Item[]) {
 	}
 }
 
-export const [getIsMobile, setIsMobile] = createContext<() => boolean>();
-
-export const [getCanEdit, setCanEdit] = createContext<() => boolean>();
-
-export const [getAdditionalUserData, setAdditionalUserData] =
-	createContext<Record<string, unknown>>();
-
 export async function refreshData(data: { updatedAt?: number; handle: string }) {
-	const FIVE_MINUTES = 5 * 60 * 1000;
+	const TEN_MINUTES = 10 * 60 * 1000;
 	const now = Date.now();
 
-	if (now - (data.updatedAt || 0) > FIVE_MINUTES && data.handle !== 'blento.app') {
+	if (now - (data.updatedAt || 0) > TEN_MINUTES) {
 		try {
 			await fetch('/' + data.handle + '/api/refreshData');
 			console.log('successfully refreshed data', data.handle);
@@ -277,5 +281,262 @@ export async function refreshData(data: { updatedAt?: number; handle: string }) 
 		}
 	} else {
 		console.log('data still fresh, skipping refreshing', data.handle);
+	}
+}
+
+export function getName(data: WebsiteData): string {
+	return (data.publication?.name ?? data.profile.displayName) || data.handle;
+}
+
+export function getDescription(data: WebsiteData): string {
+	return data.publication?.description ?? data.profile.description ?? '';
+}
+
+export function getHideProfileSection(data: WebsiteData): boolean {
+	if (data?.publication?.preferences?.hideProfileSection !== undefined)
+		return data?.publication?.preferences?.hideProfileSection;
+
+	if (data?.publication?.preferences?.hideProfile !== undefined)
+		return data?.publication?.preferences?.hideProfile;
+
+	return data.page !== 'blento.self';
+}
+
+export function isTyping() {
+	const active = document.activeElement;
+
+	const isEditable =
+		active instanceof HTMLInputElement ||
+		active instanceof HTMLTextAreaElement ||
+		// @ts-expect-error this fine
+		active?.isContentEditable;
+
+	return isEditable;
+}
+
+export function validateLink(
+	link: string | undefined,
+	tryAdding: boolean = true
+): string | undefined {
+	if (!link) return;
+	try {
+		new URL(link);
+
+		return link;
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+	} catch (e) {
+		if (!tryAdding) return;
+
+		try {
+			link = 'https://' + link;
+			new URL(link);
+
+			return link;
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		} catch (e) {
+			return;
+		}
+	}
+}
+
+export function compressImage(file: File, maxSize: number = 900 * 1024): Promise<Blob> {
+	return new Promise((resolve, reject) => {
+		const img = new Image();
+		const reader = new FileReader();
+
+		reader.onload = (e) => {
+			if (!e.target?.result) {
+				return reject(new Error('Failed to read file.'));
+			}
+			img.src = e.target.result as string;
+		};
+
+		reader.onerror = (err) => reject(err);
+		reader.readAsDataURL(file);
+
+		img.onload = () => {
+			let width = img.width;
+			let height = img.height;
+			const maxDimension = 2048;
+
+			if (width > maxDimension || height > maxDimension) {
+				if (width > height) {
+					height = Math.round((maxDimension / width) * height);
+					width = maxDimension;
+				} else {
+					width = Math.round((maxDimension / height) * width);
+					height = maxDimension;
+				}
+			}
+
+			// Create a canvas to draw the image
+			const canvas = document.createElement('canvas');
+			canvas.width = width;
+			canvas.height = height;
+			const ctx = canvas.getContext('2d');
+			if (!ctx) return reject(new Error('Failed to get canvas context.'));
+			ctx.drawImage(img, 0, 0, width, height);
+
+			// Function to try compressing at a given quality
+			let quality = 0.8;
+			function attemptCompression() {
+				canvas.toBlob(
+					(blob) => {
+						if (!blob) {
+							return reject(new Error('Compression failed.'));
+						}
+						// If the blob is under our size limit, or quality is too low, resolve it
+						if (blob.size <= maxSize || quality < 0.3) {
+							console.log('Compression successful. Blob size:', blob.size);
+							console.log('Quality:', quality);
+							resolve(blob);
+						} else {
+							// Otherwise, reduce the quality and try again
+							quality -= 0.1;
+							attemptCompression();
+						}
+					},
+					'image/jpeg',
+					quality
+				);
+			}
+
+			attemptCompression();
+		};
+
+		img.onerror = (err) => reject(err);
+	});
+}
+
+export async function savePage(
+	data: WebsiteData,
+	currentItems: Item[],
+	originalPublication: string
+) {
+	const promises = [];
+	// find all cards that have been updated (where items differ from originalItems)
+	for (let item of currentItems) {
+		const originalItem = data.cards.find((i) => cardsEqual(i, item));
+
+		if (!originalItem) {
+			console.log('updated or new item', item);
+			item.updatedAt = new Date().toISOString();
+			// run optional upload function for this card type
+			const cardDef = CardDefinitionsByType[item.cardType];
+
+			if (cardDef?.upload) {
+				item = await cardDef?.upload(item);
+			}
+
+			item.page = data.page;
+			item.version = 2;
+
+			promises.push(
+				putRecord({
+					collection: 'app.blento.card',
+					rkey: item.id,
+					record: item
+				})
+			);
+		}
+	}
+
+	// delete items that are in originalItems but not in items
+	for (const originalItem of data.cards) {
+		const item = currentItems.find((i) => i.id === originalItem.id);
+		if (!item) {
+			console.log('deleting item', originalItem);
+			promises.push(
+				deleteRecord({ collection: 'app.blento.card', rkey: originalItem.id, did: data.did })
+			);
+		}
+	}
+
+	if (
+		data.publication?.preferences?.hideProfile !== undefined &&
+		data.publication?.preferences?.hideProfileSection === undefined
+	) {
+		data.publication.preferences.hideProfileSection = data.publication?.preferences?.hideProfile;
+	}
+
+	if (!originalPublication || originalPublication !== JSON.stringify(data.publication)) {
+		data.publication ??= {
+			name: getName(data),
+			description: getDescription(data),
+			preferences: {
+				hideProfileSection: getHideProfileSection(data)
+			}
+		};
+
+		if (!data.publication.url) {
+			data.publication.url = 'https://blento.app/' + data.handle;
+
+			if (data.page !== 'blento.self') {
+				data.publication.url += '/' + data.page.replace('blento.', '');
+			}
+		}
+		promises.push(
+			putRecord({
+				collection: 'site.standard.publication',
+				rkey: data.page,
+				record: data.publication
+			})
+		);
+
+		console.log('updating or adding publication', data.publication);
+	}
+
+	await Promise.all(promises);
+
+	fetch('/' + data.handle + '/api/refreshData').then(() => {
+		console.log('data refreshed!');
+	});
+	console.log('refreshing data');
+
+	toast('Saved', {
+		description: 'Your website has been saved!'
+	});
+}
+
+export function createEmptyCard(page: string) {
+	return {
+		id: TID.nextStr(),
+		x: 0,
+		y: 0,
+		w: 2,
+		h: 2,
+		mobileH: 4,
+		mobileW: 4,
+		mobileX: 0,
+		mobileY: 0,
+		cardType: '',
+		cardData: {},
+		page
+	} as Item;
+}
+
+export function scrollToItem(
+	item: Item,
+	isMobile: boolean,
+	container: HTMLDivElement | undefined,
+	force: boolean = false
+) {
+	// scroll to newly created card only if not fully visible
+	const containerRect = container?.getBoundingClientRect();
+	if (!containerRect) return;
+	const currentMargin = isMobile ? mobileMargin : margin;
+	const currentY = isMobile ? item.mobileY : item.y;
+	const currentH = isMobile ? item.mobileH : item.h;
+	const cellSize = (containerRect.width - currentMargin * 2) / COLUMNS;
+
+	const cardTop = containerRect.top + currentMargin + currentY * cellSize;
+	const cardBottom = containerRect.top + currentMargin + (currentY + currentH) * cellSize;
+
+	const isFullyVisible = cardTop >= 0 && cardBottom <= window.innerHeight;
+
+	if (!isFullyVisible || force) {
+		const bodyRect = document.body.getBoundingClientRect();
+		const offset = containerRect.top - bodyRect.top;
+		window.scrollTo({ top: offset + cellSize * (currentY - 1), behavior: 'smooth' });
 	}
 }

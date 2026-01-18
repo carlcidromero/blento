@@ -3,7 +3,7 @@ import { ATProtoCollectionsCardDefinition } from './ATProtoCollectionsCard';
 import { BigSocialCardDefinition } from './BigSocialCard';
 import { BlueskyMediaCardDefinition } from './BlueskyMediaCard';
 import { BlueskyPostCardDefinition } from './BlueskyPostCard';
-import { DinoGameCardDefinition } from './DinoGameCard';
+import { DinoGameCardDefinition } from './GameCards/DinoGameCard';
 import { EmbedCardDefinition } from './EmbedCard';
 import { TetrisCardDefinition } from './TetrisCard';
 import { ImageCardDefinition } from './ImageCard';
@@ -14,10 +14,14 @@ import { SectionCardDefinition } from './SectionCard';
 import { UpdatedBlentosCardDefitition } from './SpecialCards/UpdatedBlentos';
 import { TextCardDefinition } from './TextCard';
 import type { CardDefinition } from './types';
-import { YoutubeCardDefinition } from './YoutubeVideo';
+import { VideoCardDefinition } from './VideoCard';
+import { YoutubeCardDefinition } from './YoutubeVideoCard';
+import { BlueskyProfileCardDefinition } from './BlueskyProfileCard';
+import { GithubProfileCardDefitition } from './GitHubProfileCard';
 
 export const AllCardDefinitions = [
 	ImageCardDefinition,
+	VideoCardDefinition,
 	TextCardDefinition,
 	LinkCardDefinition,
 	BigSocialCardDefinition,
@@ -32,6 +36,8 @@ export const AllCardDefinitions = [
 	SectionCardDefinition,
 	BlueskyMediaCardDefinition,
 	DinoGameCardDefinition,
+	BlueskyProfileCardDefinition,
+	GithubProfileCardDefitition
 	TetrisCardDefinition
 ] as const;
 

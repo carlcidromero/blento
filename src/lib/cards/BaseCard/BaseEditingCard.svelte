@@ -3,11 +3,11 @@
 	import type { HTMLAttributes } from 'svelte/elements';
 	import BaseCard from './BaseCard.svelte';
 	import type { Item } from '$lib/types';
-	import { Button, Popover } from '@foxui/core';
-	import { getCanEdit, getIsMobile } from '$lib/helper';
+	import { Button, Label, Popover } from '@foxui/core';
 	import { ColorSelect } from '@foxui/colors';
-	import { CardDefinitionsByType, getColor } from '..';
+	import { AllCardDefinitions, CardDefinitionsByType, getColor } from '..';
 	import { COLUMNS } from '$lib';
+	import { getCanEdit, getIsMobile } from '$lib/website/context';
 
 	let colorsChoices = [
 		{ class: 'text-base-500', label: 'base' },
@@ -136,8 +136,7 @@
 		if (!cardDef) return false;
 
 		if (isMobile()) {
-			
-			return w >= minW && w*2 <= maxW && h >= minH && h*2 <= maxH;
+			return w >= minW && w * 2 <= maxW && h >= minH && h * 2 <= maxH;
 		}
 
 		return w >= minW && w <= maxW && h >= minH && h <= maxH;
@@ -152,14 +151,85 @@
 	}
 
 	let settingsPopoverOpen = $state(false);
+	let changePopoverOpen = $state(false);
+
+	const changeOptions = $derived(
+		AllCardDefinitions.filter((def) => def.type !== item.cardType && def.canChange?.(item))
+	);
+
+	function applyChange(def: (typeof AllCardDefinitions)[number]) {
+		const updated = def.change ? def.change(item) : item;
+		if (updated !== item) {
+			item = updated;
+		}
+		item.cardType = def.type;
+		changePopoverOpen = false;
+	}
+
+	function getChangeLabel(def: (typeof AllCardDefinitions)[number]) {
+		return def.name;
+	}
 </script>
 
-<BaseCard {item} isEditing={true} bind:ref showOutline={isResizing} class="starting:scale-0 scale-100 starting:opacity-0 opacity-100" {...rest} >
+<BaseCard
+	{item}
+	isEditing={true}
+	bind:ref
+	showOutline={isResizing}
+	class="scale-100 opacity-100 starting:scale-0 starting:opacity-0"
+	{...rest}
+>
+	<div class="absolute inset-0 cursor-grab"></div>
 	{@render children?.()}
 
 	{#snippet controls()}
 		<!-- class="bg-base-100 border-base-200 dark:bg-base-800 dark:border-base-700 absolute -top-3 -left-3 hidden cursor-pointer items-center justify-center rounded-full border p-2 shadow-lg group-focus-within:inline-flex group-hover:inline-flex" -->
 		{#if canEdit()}
+			{#if changeOptions.length > 0}
+				<div
+					class={[
+						'absolute -top-3 -right-3 hidden group-focus-within:inline-flex group-hover:inline-flex',
+						changePopoverOpen ? 'inline-flex' : ''
+					]}
+				>
+					<Popover bind:open={changePopoverOpen} class="bg-base-50 dark:bg-base-900">
+						{#snippet child({ props })}
+							<Button size="icon" variant="secondary" {...props}>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									fill="none"
+									viewBox="0 0 24 24"
+									stroke-width="1.5"
+									stroke="currentColor"
+									class="size-6"
+								>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"
+									/>
+								</svg>
+
+								<span class="sr-only">Change card type</span>
+							</Button>
+						{/snippet}
+
+						<div class="flex min-w-36 flex-col gap-1">
+							<Label class="mb-2">Change card to</Label>
+							{#each changeOptions as changeDef}
+								<Button
+									class="justify-start"
+									variant="ghost"
+									onclick={() => applyChange(changeDef)}
+								>
+									{getChangeLabel(changeDef)}
+								</Button>
+							{/each}
+						</div>
+					</Popover>
+				</div>
+			{/if}
+
 			<Button
 				size="icon"
 				variant="rose"
@@ -194,44 +264,46 @@
 				<div
 					class="bg-base-100 border-base-200 dark:bg-base-800 dark:border-base-700 z-[100] inline-flex items-center gap-0.5 rounded-2xl border p-1 px-2 shadow-lg"
 				>
-					<Popover bind:open={colorPopoverOpen}>
-						{#snippet child({ props })}
-							<button
-								{...props}
-								class={[
-									'm-2 size-4 cursor-pointer rounded-full',
-									!item.color || item.color === 'base' || item.color === 'transparent'
-										? 'text-base-800 dark:text-base-200'
-										: 'text-accent-500'
-								]}
-							>
-								<svg
-									xmlns="http://www.w3.org/2000/svg"
-									viewBox="0 0 24 24"
-									fill="currentColor"
-									class="size-4"
+					{#if cardDef.allowSetColor !== false}
+						<Popover bind:open={colorPopoverOpen}>
+							{#snippet child({ props })}
+								<button
+									{...props}
+									class={[
+										'm-2 size-4 cursor-pointer rounded-full',
+										!item.color || item.color === 'base' || item.color === 'transparent'
+											? 'text-base-800 dark:text-base-200'
+											: 'text-accent-500'
+									]}
 								>
-									<path
-										fill-rule="evenodd"
-										d="M20.599 1.5c-.376 0-.743.111-1.055.32l-5.08 3.385a18.747 18.747 0 0 0-3.471 2.987 10.04 10.04 0 0 1 4.815 4.815 18.748 18.748 0 0 0 2.987-3.472l3.386-5.079A1.902 1.902 0 0 0 20.599 1.5Zm-8.3 14.025a18.76 18.76 0 0 0 1.896-1.207 8.026 8.026 0 0 0-4.513-4.513A18.75 18.75 0 0 0 8.475 11.7l-.278.5a5.26 5.26 0 0 1 3.601 3.602l.502-.278ZM6.75 13.5A3.75 3.75 0 0 0 3 17.25a1.5 1.5 0 0 1-1.601 1.497.75.75 0 0 0-.7 1.123 5.25 5.25 0 0 0 9.8-2.62 3.75 3.75 0 0 0-3.75-3.75Z"
-										clip-rule="evenodd"
-									/>
-								</svg>
-							</button>
-						{/snippet}
-						<ColorSelect
-							selected={selectedColor}
-							colors={colorsChoices}
-							onselected={(color, previous) => {
-								if (typeof previous === 'string' || typeof color === 'string') {
-									return;
-								}
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="currentColor"
+										class="size-4"
+									>
+										<path
+											fill-rule="evenodd"
+											d="M20.599 1.5c-.376 0-.743.111-1.055.32l-5.08 3.385a18.747 18.747 0 0 0-3.471 2.987 10.04 10.04 0 0 1 4.815 4.815 18.748 18.748 0 0 0 2.987-3.472l3.386-5.079A1.902 1.902 0 0 0 20.599 1.5Zm-8.3 14.025a18.76 18.76 0 0 0 1.896-1.207 8.026 8.026 0 0 0-4.513-4.513A18.75 18.75 0 0 0 8.475 11.7l-.278.5a5.26 5.26 0 0 1 3.601 3.602l.502-.278ZM6.75 13.5A3.75 3.75 0 0 0 3 17.25a1.5 1.5 0 0 1-1.601 1.497.75.75 0 0 0-.7 1.123 5.25 5.25 0 0 0 9.8-2.62 3.75 3.75 0 0 0-3.75-3.75Z"
+											clip-rule="evenodd"
+										/>
+									</svg>
+								</button>
+							{/snippet}
+							<ColorSelect
+								selected={selectedColor}
+								colors={colorsChoices}
+								onselected={(color, previous) => {
+									if (typeof previous === 'string' || typeof color === 'string') {
+										return;
+									}
 
-								item.color = color.label;
-							}}
-							class="w-64"
-						/>
-					</Popover>
+									item.color = color.label;
+								}}
+								class="w-64"
+							/>
+						</Popover>
+					{/if}
 
 					{#if canSetSize(2, 2)}
 						<button
@@ -283,7 +355,7 @@
 					{/if}
 
 					{#if cardDef.settingsComponent}
-						<Popover bind:open={settingsPopoverOpen}>
+						<Popover bind:open={settingsPopoverOpen} class="bg-base-50 dark:bg-base-900">
 							{#snippet child({ props })}
 								<button {...props} class="hover:bg-accent-500/10 cursor-pointer rounded-xl p-2">
 									<svg
@@ -307,7 +379,12 @@
 									</svg>
 								</button>
 							{/snippet}
-							<cardDef.settingsComponent bind:item />
+							<cardDef.settingsComponent
+								bind:item
+								onclose={() => {
+									settingsPopoverOpen = false;
+								}}
+							/>
 						</Popover>
 					{/if}
 				</div>

@@ -1,12 +1,12 @@
 <script lang="ts">
 	import { Portal } from 'bits-ui';
 
-	let isDragOver = $state(false);
-
 	let {
-		processImageFile
+		processImageFile,
+		isDragOver = $bindable()
 	}: {
 		processImageFile: (file: File) => Promise<void>;
+		isDragOver: boolean;
 	} = $props();
 
 	function handleDragOver(event: DragEvent) {

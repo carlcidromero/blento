@@ -1,5 +1,7 @@
 import { AtpBaseClient } from '@atproto/api';
 import { client } from './auth.svelte';
+import type { Record as ListRecord } from '@atproto/api/dist/client/types/com/atproto/repo/listRecords';
+import type { At } from '@atcute/client/lexicons';
 
 export async function resolveHandle({ handle }: { handle: string }) {
 	const agent = new AtpBaseClient({ service: 'https://api.bsky.app' });
@@ -39,7 +41,7 @@ export async function listRecords({
 	did,
 	collection,
 	cursor,
-	limit = 100
+	limit = 0
 }: {
 	did: string;
 	collection: string;
@@ -50,27 +52,22 @@ export async function listRecords({
 
 	const agent = new AtpBaseClient({ service: pds });
 
-	const room = await agent.com.atproto.repo.listRecords({
-		repo: did,
-		collection,
-		limit,
-		cursor
-	});
+	const allRecords = [];
 
-	// convert to { [rkey]: record }
-	const records = room.data.records.reduce(
-		(acc, record) => {
-			acc[parseUri(record.uri).rkey] = record;
-			return acc;
-		},
-		{} as Record<string, ListRecord>
-	);
+	let currentCursor = cursor;
+	do {
+		const response = await agent.com.atproto.repo.listRecords({
+			repo: did,
+			collection,
+			limit: limit || 100,
+			cursor: currentCursor
+		});
+		allRecords.push(...response.data.records);
+		currentCursor = response.data.cursor;
+	} while (currentCursor && (!limit || allRecords.length < limit));
 
-	return records;
+	return allRecords;
 }
-
-import type { Record as ListRecord } from '@atproto/api/dist/client/types/com/atproto/repo/listRecords';
-import { parseUri } from '$lib/website/utils';
 
 export async function getRecord({
 	did,
@@ -112,7 +109,7 @@ export async function putRecord({
 	const response = await client.rpc.call('com.atproto.repo.putRecord', {
 		data: {
 			collection,
-			repo: client.profile.did,
+			repo: client.profile.did as At.Identifier,
 			rkey,
 			record: {
 				...record
@@ -137,7 +134,7 @@ export async function deleteRecord({
 	const response = await client.rpc.call('com.atproto.repo.deleteRecord', {
 		data: {
 			collection,
-			repo: did,
+			repo: did as At.Identifier,
 			rkey
 		}
 	});

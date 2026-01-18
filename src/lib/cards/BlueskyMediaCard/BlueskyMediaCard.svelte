@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { getDidContext } from '$lib/website/context';
-	import { getImageBlobUrl } from '$lib/website/utils';
+	import { getImageBlobUrl } from '$lib/oauth/utils';
 	import type { ContentComponentProps } from '../types';
 	import Video from './Video.svelte';
 
@@ -16,8 +16,6 @@
 		}
 		return item.cardData.image;
 	}
-
-	$inspect(item.cardData);
 </script>
 
 {#if item.cardData.image}

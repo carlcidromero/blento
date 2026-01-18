@@ -1,15 +1,12 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import Icon from './Icon.svelte';
-	import { getDidContext, getHandleContext } from '$lib/website/context';
-	import { listRecords } from '$lib/oauth/atproto';
-	import { getAdditionalUserData, getIsMobile } from '$lib/helper';
+	import { getAdditionalUserData, getDidContext, getHandleContext, getIsMobile } from '$lib/website/context';
 	import type { ContentComponentProps } from '../types';
-	import { getImageBlobUrl } from '$lib/website/utils';
 	import { RelativeTime } from '@foxui/time';
-	import { online } from 'svelte/reactivity/window';
 	import { Badge } from '@foxui/core';
 	import { CardDefinitionsByType } from '..';
+	import { browser } from '$app/environment';
 
 	let { item = $bindable() }: ContentComponentProps = $props();
 
@@ -94,7 +91,7 @@
 				</a>
 			</div>
 
-			{#if ((isMobile() && item.mobileH >= 4) || (!isMobile() && item.h >= 2)) && latestLivestream?.thumb}
+			{#if browser && ((isMobile() && item.mobileH >= 7) || (!isMobile() && item.h >= 4)) && latestLivestream?.thumb}
 				<a href={latestLivestream?.href} target="_blank" rel="noopener noreferrer">
 					<img
 						class="my-4 max-h-32 w-full rounded-xl object-cover"

@@ -1,130 +1,95 @@
-import {
-	type Collection,
-	type DownloadedData,
-	type IndividualCollections,
-	type ListCollections
-} from './types';
-import { getRecord, listRecords, resolveHandle } from '$lib/oauth/atproto';
+import { getProfile, listRecords, resolveHandle } from '$lib/oauth/atproto';
 import type { Record as ListRecord } from '@atproto/api/dist/client/types/com/atproto/repo/listRecords';
-import { data } from './data';
 import { CardDefinitionsByType } from '$lib/cards';
-import type { Item } from '$lib/types';
-import { compactItems, fixAllCollisions, fixCollisions } from '$lib/helper';
+import type { Item, UserCache, WebsiteData } from '$lib/types';
+import { compactItems, fixAllCollisions } from '$lib/helper';
+import { parseUri } from '$lib/oauth/utils';
+import { error } from '@sveltejs/kit';
 
-type LoadedData = {
-	did: string;
-	data: DownloadedData;
-	additionalData: Record<string, unknown>;
-	updatedAt: number;
-};
+const CURRENT_CACHE_VERSION = 1;
+
+export async function getCache(handle: string, page: string, cache?: UserCache) {
+	try {
+		const cachedResult = await cache?.get?.(handle);
+
+		if (!cachedResult) return;
+		const result = JSON.parse(cachedResult);
+		const update = result.updatedAt;
+		const timePassed = (Date.now() - update) / 1000;
+
+		if (!result.version || result.version !== CURRENT_CACHE_VERSION) {
+			console.log('skipping cache because of version mismatch');
+			return;
+		}
+
+		result.page = 'blento.' + page;
+
+		result.publication = (result.publications as ListRecord[]).find(
+			(v) => parseUri(v.uri).rkey === result.page
+		)?.value;
+
+		delete result['publications'];
+
+		console.log('using cached result for handle', handle, 'last update', timePassed, 'seconds ago');
+		return checkData(result);
+	} catch (error) {
+		console.log('getting cached result failed', error);
+	}
+}
 
 export async function loadData(
 	handle: string,
-	platform?: App.Platform,
-	forceUpdate: boolean = false
-): Promise<LoadedData> {
-	console.log(handle);
-	if (!forceUpdate) {
-		try {
-			const cachedResult = await platform?.env?.USER_DATA_CACHE?.get(handle);
+	cache: UserCache | undefined,
+	forceUpdate: boolean = false,
+	page: string = 'self'
+): Promise<WebsiteData> {
+	if (!handle) throw error(404);
 
-			if (cachedResult) {
-				const result = JSON.parse(cachedResult);
-				const update = result.updatedAt;
-				const timePassed = (Date.now() - update) / 1000;
-				console.log(
-					'using cached result for handle',
-					handle,
-					'last update',
-					timePassed,
-					'seconds ago'
-				);
-				return checkData(migrateData(JSON.parse(cachedResult)));
-			}
-		} catch (error) {
-			console.log('getting cached result failed', error);
-		}
+	if (!forceUpdate) {
+		const cachedResult = await getCache(handle, page, cache);
+
+		if (cachedResult) return cachedResult;
 	}
 
+	if (handle === 'favicon.ico') throw error(404);
+
+	console.log('resolving', handle);
 	const did = await resolveHandle({ handle });
 
-	const downloadedData = {} as DownloadedData;
+	const cards = await listRecords({ did, collection: 'app.blento.card' }).catch(() => {
+		console.error('error getting records for collection app.blento.card');
+		return [] as ListRecord[];
+	});
 
-	const promises: {
-		collection: string;
-		rkey?: string;
-		record: Promise<ListRecord> | Promise<Record<string, ListRecord>>;
-	}[] = [];
-
-	for (const collection of Object.keys(data) as Collection[]) {
-		const cfg = data[collection];
-
-		try {
-			if (Array.isArray(cfg)) {
-				for (const rkey of cfg) {
-					const record = getRecord({ did, collection, rkey }).catch((error) => {
-						console.error('error getting record', rkey, 'for collection', collection);
-					});
-					promises.push({
-						collection,
-						rkey,
-						record
-					});
-				}
-			} else if (cfg === 'all') {
-				const records = listRecords({ did, collection }).catch((error) => {
-					console.error('error getting records for collection', collection);
-				});
-				promises.push({ collection, record: records });
-			}
-		} catch (error) {
-			console.error('failed getting', collection, cfg, error);
+	const publications = await listRecords({ did, collection: 'site.standard.publication' }).catch(
+		() => {
+			console.error('error getting records for collection site.standard.publication');
+			return [] as ListRecord[];
 		}
-	}
-
-	await Promise.all(promises.map((v) => v.record));
-
-	for (const promise of promises) {
-		if (promise.rkey) {
-			downloadedData[promise.collection as IndividualCollections] ??= {} as Record<
-				string,
-				ListRecord
-			>;
-			downloadedData[promise.collection as IndividualCollections][promise.rkey] =
-				(await promise.record) as ListRecord;
-		} else {
-			downloadedData[promise.collection as ListCollections] ??= (await promise.record) as Record<
-				string,
-				ListRecord
-			>;
-		}
-	}
-
-	const cardTypes = new Set(
-		Object.values(downloadedData['app.blento.card']).map((v) => v.value.cardType) as string[]
 	);
 
+	const profile = await getProfile({ did });
+
+	const cardTypes = new Set(cards.map((v) => v.value.cardType ?? '') as string[]);
 	const cardTypesArray = Array.from(cardTypes);
 
 	const additionDataPromises: Record<string, Promise<unknown>> = {};
 
-	const loadOptions = { did, handle, platform };
+	const loadOptions = { did, handle, cache };
 
 	for (const cardType of cardTypesArray) {
 		const cardDef = CardDefinitionsByType[cardType];
 
-		if (cardDef.loadData) {
-			additionDataPromises[cardType] = cardDef
-				.loadData(
-					Object.values(downloadedData['app.blento.card'])
-						.filter((v) => cardType == v.value.cardType)
-						.map((v) => v.value) as Item[],
-					loadOptions
-				)
-				.catch((error) => {
-					console.error('error getting additional data for', cardType, error);
-				});
-		}
+		if (!cardDef.loadData) continue;
+
+		additionDataPromises[cardType] = cardDef
+			.loadData(
+				cards.filter((v) => cardType === v.value.cardType).map((v) => v.value) as Item[],
+				loadOptions
+			)
+			.catch((error: Error) => {
+				console.error('error getting additional data for', cardType, error);
+			});
 	}
 
 	await Promise.all(Object.values(additionDataPromises));
@@ -139,19 +104,34 @@ export async function loadData(
 	}
 
 	const result = {
+		page: 'blento.' + page,
+		handle,
 		did,
-		data: JSON.parse(JSON.stringify(downloadedData)) as DownloadedData,
+		cards: (cards.map((v) => {
+			return { ...v.value };
+		}) ?? []) as Item[],
+		publications: publications,
 		additionalData,
-		updatedAt: Date.now()
+		profile,
+		updatedAt: Date.now(),
+		version: CURRENT_CACHE_VERSION
 	};
 
-	await platform?.env?.USER_DATA_CACHE?.put(handle, JSON.stringify(result));
+	const stringifiedResult = JSON.stringify(result);
+	await cache?.put?.(handle, stringifiedResult);
 
-	return checkData(migrateData(result));
+	const parsedResult = JSON.parse(stringifiedResult);
+	parsedResult.publication = (parsedResult.publications as ListRecord[]).find(
+		(v) => parseUri(v.uri).rkey === parsedResult.page
+	)?.value;
+
+	delete parsedResult['publications'];
+
+	return checkData(parsedResult);
 }
 
-function migrateFromV0ToV1(data: LoadedData): LoadedData {
-	for (const card of Object.values(data.data['app.blento.card']).map((i) => i.value) as Item[]) {
+function migrateFromV0ToV1(data: WebsiteData): WebsiteData {
+	for (const card of data.cards) {
 		if (card.version) continue;
 		card.x *= 2;
 		card.y *= 2;
@@ -167,10 +147,21 @@ function migrateFromV0ToV1(data: LoadedData): LoadedData {
 	return data;
 }
 
-function checkData(data: LoadedData): LoadedData {
-	const cards = Object.values(data.data['app.blento.card']).map((i) => i.value) as Item[];
+function migrateFromV1ToV2(data: WebsiteData): WebsiteData {
+	for (const card of data.cards) {
+		if (!card.version || card.version < 2) {
+			card.page = 'blento.self';
+			card.version = 2;
+		}
+	}
+	return data;
+}
 
-	console.log(cards);
+function checkData(data: WebsiteData): WebsiteData {
+	data = migrateData(data);
+
+	const cards = data.cards.filter((v) => v.page === data.page);
+
 	if (cards.length > 0) {
 		fixAllCollisions(cards);
 		fixAllCollisions(cards, true);
@@ -179,9 +170,11 @@ function checkData(data: LoadedData): LoadedData {
 		compactItems(cards, true);
 	}
 
+	data.cards = cards;
+
 	return data;
 }
 
-function migrateData(data: LoadedData): LoadedData {
-	return migrateFromV0ToV1(data);
+function migrateData(data: WebsiteData): WebsiteData {
+	return migrateFromV1ToV2(migrateFromV0ToV1(data));
 }

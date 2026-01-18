@@ -1,7 +1,7 @@
-import { uploadBlob } from '$lib/website/utils';
+import { uploadBlob } from '$lib/oauth/utils';
 import type { CardDefinition } from '../types';
-import CreateImageCardModal from './CreateImageCardModal.svelte';
 import ImageCard from './ImageCard.svelte';
+import ImageCardSettings from './ImageCardSettings.svelte';
 
 export const ImageCardDefinition = {
 	type: 'image',
@@ -14,7 +14,6 @@ export const ImageCardDefinition = {
 			href: ''
 		};
 	},
-	creationModalComponent: CreateImageCardModal,
 	upload: async (item) => {
 		if (item.cardData.blob) {
 			item.cardData.image = await uploadBlob(item.cardData.blob);
@@ -29,5 +28,13 @@ export const ImageCardDefinition = {
 		}
 
 		return item;
-	}
+	},
+	settingsComponent: ImageCardSettings,
+
+	canChange: (item) => Boolean(item.cardData.image),
+
+	change: (item) => {
+		return item;
+	},
+	name: 'Image Card'
 } as CardDefinition & { type: 'image' };

@@ -1,5 +1,6 @@
 import { loadData } from '$lib/website/load';
 import { env } from '$env/dynamic/public';
+import type { UserCache } from '$lib/types';
 
 export async function load({ url, platform }) {
 	const hostname = url.hostname;
@@ -9,6 +10,7 @@ export async function load({ url, platform }) {
 		handle = 'flo-bit.dev';
 	}
 
-	const data = await loadData(handle, platform);
-	return { ...data, handle };
+	const cache = platform?.env?.USER_DATA_CACHE as unknown;
+
+	return await loadData(handle, cache as UserCache);
 }

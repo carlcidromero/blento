@@ -4,7 +4,6 @@
 	import { onMount } from 'svelte';
 	import { AtpBaseClient } from '@atproto/api';
 	import { getDidContext } from '$lib/website/context';
-	import { getImageBlobUrl } from '$lib/website/utils';
 
 	let { item = $bindable(), oncreate, oncancel }: CreationModalComponentProps = $props();
 
