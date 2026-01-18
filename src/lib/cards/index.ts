@@ -5,6 +5,7 @@ import { BlueskyMediaCardDefinition } from './BlueskyMediaCard';
 import { BlueskyPostCardDefinition } from './BlueskyPostCard';
 import { DinoGameCardDefinition } from './GameCards/DinoGameCard';
 import { EmbedCardDefinition } from './EmbedCard';
+import { TetrisCardDefinition } from './TetrisCard';
 import { ImageCardDefinition } from './ImageCard';
 import { LinkCardDefinition } from './LinkCard';
 import { LivestreamCardDefitition, LivestreamEmbedCardDefitition } from './LivestreamCard';
@@ -37,6 +38,7 @@ export const AllCardDefinitions = [
 	DinoGameCardDefinition,
 	BlueskyProfileCardDefinition,
 	GithubProfileCardDefitition
+	TetrisCardDefinition
 ] as const;
 
 export const CardDefinitionsByType = AllCardDefinitions.reduce(
