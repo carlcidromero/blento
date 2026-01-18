@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { ContentComponentProps } from '../types';
 	import { onMount, onDestroy } from 'svelte';
+	import Tetris8BitMusic from './Tetris8Bit.mp3';
+	import { isTyping } from '$lib/helper';
 
 	let { item }: ContentComponentProps = $props();
 
@@ -9,6 +11,9 @@
 	let ctx: CanvasRenderingContext2D | null = null;
 	let animationId: number;
 	let audioCtx: AudioContext | null = null;
+
+	// Background music
+	let bgMusic: HTMLAudioElement | null = null;
 
 	// Theme detection
 	let isAccentMode = $state(false);
@@ -221,32 +226,52 @@
 
 	function playMove() {
 		// 8-bit tick
-		playTone(200, 0.03, 'square', 0.025);
+		playTone(200, 0.03, 'square', 0.08);
 	}
 
 	function playRotate() {
 		// 8-bit blip
-		playTone(400, 0.04, 'square', 0.03);
+		playTone(400, 0.04, 'square', 0.1);
 	}
 
 	function playDrop() {
 		// 8-bit thud
-		playTone(80, 0.1, 'square', 0.04);
+		playTone(80, 0.1, 'square', 0.12);
 	}
 
 	function playLineClear(count: number) {
 		// Swoosh - original style
 		const baseFreq = 400;
 		for (let i = 0; i < count; i++) {
-			setTimeout(() => playTone(baseFreq + i * 100, 0.15, 'sine', 0.08), i * 80);
+			setTimeout(() => playTone(baseFreq + i * 100, 0.15, 'sine', 0.15), i * 80);
 		}
 	}
 
 	function playGameOver() {
 		// 8-bit descending
-		playTone(300, 0.15, 'square', 0.035);
-		setTimeout(() => playTone(200, 0.15, 'square', 0.03), 150);
-		setTimeout(() => playTone(120, 0.3, 'square', 0.025), 300);
+		playTone(300, 0.15, 'square', 0.1);
+		setTimeout(() => playTone(200, 0.15, 'square', 0.08), 150);
+		setTimeout(() => playTone(120, 0.3, 'square', 0.06), 300);
+		stopMusic();
+	}
+
+	function startMusic() {
+		if (!bgMusic) {
+			bgMusic = new Audio(Tetris8BitMusic);
+			bgMusic.loop = true;
+			bgMusic.volume = 0.08;
+		}
+		bgMusic.currentTime = 0;
+		bgMusic.play().catch(() => {
+			// Autoplay blocked, ignore
+		});
+	}
+
+	function stopMusic() {
+		if (bgMusic) {
+			bgMusic.pause();
+			bgMusic.currentTime = 0;
+		}
 	}
 
 	// Initialize grid
@@ -389,8 +414,11 @@
 		const cleared = clearingLines.length;
 
 		// Remove lines from bottom to top to maintain indices
+		// Do all splices first, then add empty rows, to avoid index shifting issues
 		for (const row of [...clearingLines].sort((a, b) => b - a)) {
 			grid.splice(row, 1);
+		}
+		for (let i = 0; i < cleared; i++) {
 			grid.unshift(Array(COLS).fill(null));
 		}
 
@@ -425,6 +453,9 @@
 
 	// Handle keyboard input
 	function handleKeyDown(e: KeyboardEvent) {
+		// Don't capture keys when user is typing in an input field
+		if (isTyping()) return;
+
 		if (gameState !== 'playing' || isClearingAnimation) {
 			if (e.code === 'Space' || e.code === 'Enter') {
 				e.preventDefault();
@@ -464,36 +495,123 @@
 	// Touch controls
 	let touchStartX = 0;
 	let touchStartY = 0;
+	let touchStartTime = 0;
+	let longPressTimer: ReturnType<typeof setTimeout> | null = null;
+	let isLongPressing = false;
+	let longPressInterval: ReturnType<typeof setInterval> | null = null;
+	let lastMoveX = 0;
+	let hasMoved = false;
+
+	const LONG_PRESS_DELAY = 300;
+	const LONG_PRESS_MOVE_INTERVAL = 50;
+	const SWIPE_THRESHOLD = 30;
+	const MOVE_CELL_THRESHOLD = 25;
 
 	function handleTouchStart(e: TouchEvent) {
+		// Prevent page scrolling when game is active
+		if (gameState === 'playing') {
+			e.preventDefault();
+		}
+
 		if (gameState !== 'playing' || isClearingAnimation) {
 			if (gameState !== 'playing') startGame();
 			return;
 		}
-		touchStartX = e.touches[0].clientX;
-		touchStartY = e.touches[0].clientY;
+
+		const touch = e.touches[0];
+		touchStartX = touch.clientX;
+		touchStartY = touch.clientY;
+		touchStartTime = performance.now();
+		lastMoveX = touch.clientX;
+		hasMoved = false;
+		isLongPressing = false;
+
+		// Start long press detection
+		longPressTimer = setTimeout(() => {
+			isLongPressing = true;
+			// Start accelerated falling
+			longPressInterval = setInterval(() => {
+				if (gameState === 'playing' && !isClearingAnimation) {
+					if (movePiece(0, 1)) score += 1;
+				}
+			}, LONG_PRESS_MOVE_INTERVAL);
+		}, LONG_PRESS_DELAY);
+	}
+
+	function handleTouchMove(e: TouchEvent) {
+		if (gameState !== 'playing' || isClearingAnimation) return;
+
+		// Prevent page scrolling
+		e.preventDefault();
+
+		const touch = e.touches[0];
+		const dx = touch.clientX - touchStartX;
+		const dy = touch.clientY - touchStartY;
+
+		// If moved significantly, cancel long press
+		if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+			if (longPressTimer) {
+				clearTimeout(longPressTimer);
+				longPressTimer = null;
+			}
+			if (longPressInterval) {
+				clearInterval(longPressInterval);
+				longPressInterval = null;
+				isLongPressing = false;
+			}
+		}
+
+		// Only allow horizontal movement if not swiping down
+		// (vertical movement is greater than horizontal)
+		if (Math.abs(dy) > Math.abs(dx) && dy > SWIPE_THRESHOLD) {
+			return;
+		}
+
+		// Handle horizontal movement in cells
+		const cellsMoved = Math.floor((touch.clientX - lastMoveX) / MOVE_CELL_THRESHOLD);
+		if (cellsMoved !== 0) {
+			hasMoved = true;
+			for (let i = 0; i < Math.abs(cellsMoved); i++) {
+				movePiece(cellsMoved > 0 ? 1 : -1, 0);
+			}
+			lastMoveX += cellsMoved * MOVE_CELL_THRESHOLD;
+		}
 	}
 
 	function handleTouchEnd(e: TouchEvent) {
+		// Clean up long press
+		if (longPressTimer) {
+			clearTimeout(longPressTimer);
+			longPressTimer = null;
+		}
+		if (longPressInterval) {
+			clearInterval(longPressInterval);
+			longPressInterval = null;
+		}
+
 		if (gameState !== 'playing' || isClearingAnimation) return;
+
+		// If was long pressing, don't do anything else
+		if (isLongPressing) {
+			isLongPressing = false;
+			return;
+		}
 
 		const touchEndX = e.changedTouches[0].clientX;
 		const touchEndY = e.changedTouches[0].clientY;
 		const dx = touchEndX - touchStartX;
 		const dy = touchEndY - touchStartY;
-		const threshold = 30;
+		const elapsed = performance.now() - touchStartTime;
 
-		if (Math.abs(dx) < threshold && Math.abs(dy) < threshold) {
-			// Tap - rotate
+		// Quick tap (no movement) - rotate
+		if (!hasMoved && Math.abs(dx) < SWIPE_THRESHOLD && Math.abs(dy) < SWIPE_THRESHOLD && elapsed < 300) {
 			rotatePiece();
-		} else if (Math.abs(dx) > Math.abs(dy)) {
-			// Horizontal swipe
-			if (dx > threshold) movePiece(1, 0);
-			else if (dx < -threshold) movePiece(-1, 0);
-		} else {
-			// Vertical swipe
-			if (dy > threshold * 2) hardDrop();
-			else if (dy > threshold) movePiece(0, 1);
+			return;
+		}
+
+		// Swipe down - hard drop
+		if (dy > SWIPE_THRESHOLD * 2 && Math.abs(dy) > Math.abs(dx)) {
+			hardDrop();
 		}
 	}
 
@@ -511,6 +629,7 @@
 		spawnPiece();
 		gameState = 'playing';
 		lastDrop = performance.now();
+		startMusic();
 	}
 
 	function calculateSize() {
@@ -811,6 +930,16 @@
 		if (audioCtx) {
 			audioCtx.close();
 		}
+		if (bgMusic) {
+			bgMusic.pause();
+			bgMusic = null;
+		}
+		if (longPressTimer) {
+			clearTimeout(longPressTimer);
+		}
+		if (longPressInterval) {
+			clearInterval(longPressInterval);
+		}
 	});
 </script>
 
@@ -819,8 +948,9 @@
 <div bind:this={container} class="relative h-full w-full overflow-hidden">
 	<canvas
 		bind:this={canvas}
-		class="h-full w-full"
+		class="h-full w-full touch-none"
 		ontouchstart={handleTouchStart}
+		ontouchmove={handleTouchMove}
 		ontouchend={handleTouchEnd}
 	></canvas>
 
