@@ -19,6 +19,7 @@ import { YoutubeCardDefinition } from './YoutubeVideoCard';
 import { BlueskyProfileCardDefinition } from './BlueskyProfileCard';
 import { GithubProfileCardDefitition } from './GitHubProfileCard';
 import { PopfeedReviewsCardDefinition } from './PopfeedReviews';
+import { TealFMPlaysCardDefinition } from './TealFMPlaysCard';
 
 export const AllCardDefinitions = [
 	ImageCardDefinition,
@@ -40,7 +41,8 @@ export const AllCardDefinitions = [
 	BlueskyProfileCardDefinition,
 	GithubProfileCardDefitition,
 	TetrisCardDefinition,
-	PopfeedReviewsCardDefinition
+	PopfeedReviewsCardDefinition,
+	TealFMPlaysCardDefinition
 ] as const;
 
 export const CardDefinitionsByType = AllCardDefinitions.reduce(
