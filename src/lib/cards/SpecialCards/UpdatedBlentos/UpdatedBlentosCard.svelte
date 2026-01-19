@@ -25,8 +25,9 @@
 					src={profile.avatar}
 					class="bg-base-200 dark:bg-base-700 accent:bg-accent-300 aspect-square size-28 rounded-full"
 					alt=""
+					loading="lazy"
 				/>
-				<div class="text-md line-clamp-1 text-center font-bold">
+				<div class="text-md line-clamp-1 text-center font-bold max-w-full">
 					{profile.displayName || profile.handle}
 				</div>
 			</a>
