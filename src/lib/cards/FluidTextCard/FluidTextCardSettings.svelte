@@ -10,7 +10,7 @@
 		item.cardData.fontSize = 0.33;
 	}
 
-	const displayPercent = $derived(Math.round((item.cardData.fontSize as number) * 100));
+	const displayPercent = $derived(Math.round((parseFloat(item.cardData.fontSize) as number) * 100));
 </script>
 
 <div class="flex flex-col gap-3">
@@ -26,9 +26,9 @@
 			min="0.1"
 			max="0.8"
 			step="0.01"
-			value={item.cardData.fontSize ?? 0.33}
+			value={parseFloat(item.cardData.fontSize) ?? 0.33}
 			oninput={(e) => {
-				item.cardData.fontSize = parseFloat(e.currentTarget.value);
+				item.cardData.fontSize = e.currentTarget.value.toString();
 			}}
 			class="bg-base-200 dark:bg-base-700 h-2 w-full cursor-pointer appearance-none rounded-lg"
 		/>

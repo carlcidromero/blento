@@ -19,7 +19,7 @@
 	const text = $derived((item.cardData?.text as string) || 'hello');
 	const fontWeight = '900';
 	const fontFamily = 'Arial';
-	const fontSize = $derived((item.cardData?.fontSize as number) || 0.13);
+	const fontSize = $derived(parseFloat(item.cardData?.fontSize) || 0.33);
 
 	// Draw text mask on overlay canvas
 	function drawOverlayCanvas() {
