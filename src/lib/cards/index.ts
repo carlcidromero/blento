@@ -21,6 +21,8 @@ import { GithubProfileCardDefitition } from './GitHubProfileCard';
 import { FluidTextCardDefinition } from './FluidTextCard';
 import { PopfeedReviewsCardDefinition } from './PopfeedReviews';
 import { TealFMPlaysCardDefinition } from './TealFMPlaysCard';
+import { PhotoGalleryCardDefinition } from './PhotoGalleryCard';
+import { StandardSiteDocumentListCardDefinition } from './StandardSiteDocumentListCard';
 
 export const AllCardDefinitions = [
 	ImageCardDefinition,
@@ -44,7 +46,9 @@ export const AllCardDefinitions = [
 	TetrisCardDefinition,
 	FluidTextCardDefinition,
 	PopfeedReviewsCardDefinition,
-	TealFMPlaysCardDefinition
+	TealFMPlaysCardDefinition,
+	PhotoGalleryCardDefinition,
+	StandardSiteDocumentListCardDefinition
 ] as const;
 
 export const CardDefinitionsByType = AllCardDefinitions.reduce(
