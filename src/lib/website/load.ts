@@ -17,8 +17,15 @@ export async function getCache(handle: string, page: string, cache?: UserCache) 
 		const update = result.updatedAt;
 		const timePassed = (Date.now() - update) / 1000;
 
+		const ONE_DAY = 60 * 60 * 24;
+
 		if (!result.version || result.version !== CURRENT_CACHE_VERSION) {
 			console.log('skipping cache because of version mismatch');
+			return;
+		}
+
+		if (timePassed > ONE_DAY) {
+			console.log('skipping cache because of age');
 			return;
 		}
 

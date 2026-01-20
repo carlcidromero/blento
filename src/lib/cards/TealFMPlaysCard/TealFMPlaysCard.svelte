@@ -16,25 +16,22 @@
 	let handle = getHandleContext();
 
 	onMount(async () => {
-		console.log(feed);
-		if (!feed) {
-			feed = (await CardDefinitionsByType[item.cardType]?.loadData?.([], {
-				did,
-				handle
-			})) as any;
+		if (feed) return;
 
-			console.log(feed);
+		feed = (await CardDefinitionsByType[item.cardType]?.loadData?.([], {
+			did,
+			handle
+		})) as any;
 
-			data[item.cardType] = feed;
-		}
+		data[item.cardType] = feed;
 	});
 
 	function isNumeric(str: string) {
-		if (typeof str != 'string') return false; // we only process strings!
+		if (typeof str != 'string') return false;
 		return (
-			!isNaN(str) && // use type coercion to parse the _entirety_ of the string (`parseFloat` alone does not do this)...
+			!isNaN(str) &&
 			!isNaN(parseFloat(str))
-		); // ...and ensure strings of whitespace fail
+		); 
 	}
 </script>
 
@@ -74,7 +71,7 @@
 {/snippet}
 
 <div class="z-10 flex h-full w-full flex-col gap-4 overflow-y-scroll p-4">
-	{#each (feed ?? []).slice(0, 20) as play}
+	{#each feed ?? [] as play}
 		{#if play.value.originUrl}
 			<a href={play.value.originUrl} target="_blank" rel="noopener noreferrer" class="w-full">
 				{@render musicItem(play)}

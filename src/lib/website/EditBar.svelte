@@ -60,7 +60,7 @@
 	bind:this={videoInputRef}
 />
 
-{#if client.isLoggedIn && client.profile?.did === data.did}
+{#if dev || (client.isLoggedIn && client.profile?.did === data.did)}
 	<Navbar
 		class={[
 			'dark:bg-base-900 bg-base-100 top-auto bottom-2 mx-4 mt-3 max-w-3xl rounded-full px-4 md:mx-auto lg:inline-flex',
