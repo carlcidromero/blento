@@ -18,6 +18,7 @@ import { VideoCardDefinition } from './VideoCard';
 import { YoutubeCardDefinition } from './YoutubeVideoCard';
 import { BlueskyProfileCardDefinition } from './BlueskyProfileCard';
 import { GithubProfileCardDefitition } from './GitHubProfileCard';
+import { FluidTextCardDefinition } from './FluidTextCard';
 import { PopfeedReviewsCardDefinition } from './PopfeedReviews';
 import { TealFMPlaysCardDefinition } from './TealFMPlaysCard';
 import { PhotoGalleryCardDefinition } from './PhotoGalleryCard';
@@ -43,6 +44,7 @@ export const AllCardDefinitions = [
 	BlueskyProfileCardDefinition,
 	GithubProfileCardDefitition,
 	TetrisCardDefinition,
+	FluidTextCardDefinition,
 	PopfeedReviewsCardDefinition,
 	TealFMPlaysCardDefinition,
 	PhotoGalleryCardDefinition,
