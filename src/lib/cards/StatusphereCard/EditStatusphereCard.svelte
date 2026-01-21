@@ -37,6 +37,10 @@
 	<PopoverEmojiPicker
 		bind:open={showPopover}
 		onpicked={(emoji) => {
+			record ??= {
+				value: {}
+			};
+
 			record.value.status = emoji.unicode;
 
 			item.cardData.hasUpdate = true;
