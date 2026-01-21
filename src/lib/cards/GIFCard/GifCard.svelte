@@ -1,34 +1,24 @@
 <script lang="ts">
-	import { getDidContext } from '$lib/website/context';
-	import { getImageBlobUrl } from '$lib/oauth/utils';
 	import type { ContentComponentProps } from '../types';
 
 	let { item }: ContentComponentProps = $props();
-
-	const did = getDidContext();
-
-	function getSrc() {
-		if (item.cardData.objectUrl) return item.cardData.objectUrl;
-
-		if (item.cardData.image && typeof item.cardData.image === 'object') {
-			return getImageBlobUrl({ did, link: item.cardData.image?.ref?.$link });
-		}
-
-		return item.cardData.url || item.cardData.image;
-	}
 
 	let hasError = $state(false);
 </script>
 
 <div class="relative h-full w-full overflow-hidden">
-	{#key item.cardData.url || item.cardData.image || item.cardData.objectUrl}
-		{#if getSrc() && !hasError}
-			<img
+	{#key item.cardData.url}
+		{#if item.cardData.url && !hasError}
+			<video
 				class="absolute inset-0 h-full w-full object-cover"
-				src={getSrc()}
-				alt={item.cardData.alt || 'GIF'}
+				src={item.cardData.url}
+				autoplay
+				loop
+				muted
+				playsinline
 				onerror={() => (hasError = true)}
-			/>
+			></video>
+			
 		{:else}
 			<div
 				class="flex h-full w-full items-center justify-center bg-base-100 dark:bg-base-900"
