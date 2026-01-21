@@ -1,3 +1,6 @@
+// animated emojis from
+// https://googlefonts.github.io/noto-emoji-animation/
+
 import type { CardDefinition } from '../types';
 import { listRecords, putRecord } from '$lib/oauth/atproto';
 import StatusphereCard from './StatusphereCard.svelte';
