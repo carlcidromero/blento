@@ -32,13 +32,15 @@ export const LivestreamCardDefitition = {
 			| undefined;
 		const values = Object.values(records);
 		if (values?.length > 0) {
-			const latest = JSON.parse(JSON.stringify(values[0]));
+			const latest = JSON.parse(JSON.stringify(values?.[0]));
 
 			latestLivestream = {
 				createdAt: latest.value.createdAt,
-				title: latest.value.title as string,
-				thumb: getImageBlobUrl({ link: latest.value.thumb?.ref.$link, did }),
-				href: latest.value.canonicalUrl || latest.value.url,
+				title: latest.value?.title as string,
+				thumb: latest.value?.thumb?.ref?.$link
+					? getImageBlobUrl({ link: latest.value.thumb.ref.$link, did })
+					: undefined,
+				href: latest.value?.canonicalUrl || latest.value.url,
 				online: undefined
 			};
 		}
